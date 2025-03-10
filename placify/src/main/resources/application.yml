@@ -1,0 +1,9 @@
+spring:
+  datasource: #cloud
+    url: jdbc:postgresql://dpg-cv78m3gfnakc738i7k9g-a.singapore-postgres.render.com/placify_db_ta3m
+    username: placify_jm
+    password: OscJEBiomuP0Q040AyfJ2d4veEJNe95m
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
