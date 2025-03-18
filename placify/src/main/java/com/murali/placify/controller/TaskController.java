@@ -1,7 +1,7 @@
 package com.murali.placify.controller;
 
 import com.murali.placify.model.TaskWithProblemLinksDTO;
-import com.murali.placify.response.APIResponse;
+import com.murali.placify.response.ApiResponse;
 import com.murali.placify.service.TaskService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -23,14 +23,14 @@ public class TaskController {
 
     //TODO: should be accessible only for staff login and change the response as DTO including userID
     @PostMapping("/problems")
-    public ResponseEntity<APIResponse> createTaskWithProblemLinks(@RequestBody TaskWithProblemLinksDTO dto) {
+    public ResponseEntity<ApiResponse> createTaskWithProblemLinks(@RequestBody TaskWithProblemLinksDTO dto) {
 
-        return new ResponseEntity<>(new APIResponse("Task created", taskService.createTaskWithProblemLinks(dto)), HttpStatus.OK);
+        return new ResponseEntity<>(new ApiResponse("Task created", taskService.createTaskWithProblemLinks(dto)), HttpStatus.OK);
     }
 
     //TODO: should be accessible only for staff login and change the response as DTO including userID
     @PostMapping("/problems/bulk")
-    public ResponseEntity<APIResponse> createBulkTaskWithProblemLinks(@RequestBody List<TaskWithProblemLinksDTO> dtos) {
-        return new ResponseEntity<>(new APIResponse("Tasks created", taskService.createBulkTaskWithProblemLinks(dtos)), HttpStatus.OK);
+    public ResponseEntity<ApiResponse> createBulkTaskWithProblemLinks(@RequestBody List<TaskWithProblemLinksDTO> dtos) {
+        return new ResponseEntity<>(new ApiResponse("Tasks created", taskService.createBulkTaskWithProblemLinks(dtos)), HttpStatus.OK);
     }
 }

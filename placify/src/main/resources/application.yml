@@ -1,9 +1,30 @@
 spring:
   datasource: #cloud
-    url: jdbc:postgresql://dpg-cv78m3gfnakc738i7k9g-a.singapore-postgres.render.com/placify_db_ta3m
-    username: placify_jm
-    password: OscJEBiomuP0Q040AyfJ2d4veEJNe95m
+#    url: jdbc:postgresql://dpg-cv78m3gfnakc738i7k9g-a.singapore-postgres.render.com/placify_db_ta3m
+#    username: placify_jm
+#    password: OscJEBiomuP0Q040AyfJ2d4veEJNe95m
+
+    url: jdbc:postgresql://localhost:5432/placify_local
+    username: postgres
+    password: murali27#
   jpa:
     hibernate:
       ddl-auto: update
     show-sql: true
+
+  mail:
+    host: smtp.gmail.com
+
+    port: 587
+    username: expensetracker.nsm.projectet@gmail.com
+    password: fqsa klma ceku bzyk
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+
+dev:
+  domain-url: localhost:8080/api/v0
+  fromMail: expensetracker.nsm.projectet@gmail.com

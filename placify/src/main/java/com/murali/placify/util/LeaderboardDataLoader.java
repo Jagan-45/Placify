@@ -1,11 +1,11 @@
 package com.murali.placify.util;
 
+import com.murali.placify.entity.Department;
 import com.murali.placify.entity.Leaderboard;
 import com.murali.placify.entity.User;
-import com.murali.placify.entity.Department;
 import com.murali.placify.enums.Level;
 import com.murali.placify.enums.Role;
-import com.murali.placify.repository.DepartmentRepo;
+import com.murali.placify.repository.DepartmentRepository;
 import com.murali.placify.repository.LeaderboardRepo;
 import com.murali.placify.repository.UserRepository;
 import jakarta.annotation.PostConstruct;
@@ -29,7 +29,7 @@ public class LeaderboardDataLoader {
     private UserRepository userRepository;
 
     @Autowired
-    private DepartmentRepo departmentRepo;
+    private DepartmentRepository departmentRepo;
 
     private final Random random = new Random();
 
@@ -57,8 +57,8 @@ public class LeaderboardDataLoader {
 
         for (int i = 0; i < departmentNames.length; i++) {
             Department department = new Department();
-            department.setId((byte) (i + 1)); // Set a unique department ID (1, 2, 3...)
-            department.setDepartmentName(departmentNames[i]);
+            department.setDeptID((byte) (i + 1)); // Set a unique department ID (1, 2, 3...)
+            department.setDeptName(departmentNames[i]);
             departmentRepo.save(department);
         }
     }
@@ -76,9 +76,9 @@ public class LeaderboardDataLoader {
         for (int i = 0; i < 25; i++) {
             User user = new User();
             user.setUsername("user" + (i + 1));
-            user.setEmail("user" + (i + 1) + "@example.com");
-            user.setRole(random.nextBoolean() ? Role.STUDENT : Role.STAFF);
-            user.setAcademicBatch(random.nextInt(10) + 1); // Random batch between 1 and 10
+            user.setMailID("user" + (i + 1) + "@example.com");
+            user.setRole(random.nextBoolean() ? Role.ROLE_STUDENT : Role.ROLE_STAFF);
+            user.setYear(random.nextInt(10) + 1); // Random batch between 1 and 10
             user.setDepartment(departments.get(random.nextInt(departments.size()))); // Randomly assign a department
             userRepository.save(user);
             createdUsers.add(user); // Store the user in the list

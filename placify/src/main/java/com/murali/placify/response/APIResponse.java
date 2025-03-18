@@ -4,10 +4,15 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-@AllArgsConstructor
-@NoArgsConstructor
 @Data
-public class APIResponse {
+@NoArgsConstructor
+@AllArgsConstructor
+public class ApiResponse {
     private String message;
     private Object data;
+
+    public ApiResponse(String msg){
+        message = msg;
+    }
+
 }

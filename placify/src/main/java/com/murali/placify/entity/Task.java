@@ -37,12 +37,12 @@ public class Task {
 
     @JsonIgnore
     @ManyToOne
-    @JoinColumn(name = "assigned_to", referencedColumnName = "id")
+    @JoinColumn(name = "assigned_to", referencedColumnName = "user_id")
     private User assignedTo;
 
     @JsonIgnore
     @ManyToOne
-    @JoinColumn(name = "assigned_by", referencedColumnName = "id")
+    @JoinColumn(name = "assigned_by", referencedColumnName = "user_id")
     private User assignedBy;
 
     @OneToMany(mappedBy = "task", cascade = CascadeType.ALL, orphanRemoval = true)

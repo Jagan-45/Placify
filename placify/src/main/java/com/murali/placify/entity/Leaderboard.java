@@ -17,7 +17,7 @@ import java.util.UUID;
 public class Leaderboard {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
+    @GeneratedValue(strategy = GenerationType.UUID)
     @JsonIgnore
     private UUID id;
 
@@ -32,6 +32,6 @@ public class Leaderboard {
     private Level level = Level.NEWBIE;
 
     @OneToOne
-    @JoinColumn(name = "user_id", referencedColumnName = "id", nullable = false)
+    @JoinColumn(name = "user_id", referencedColumnName = "user_id", nullable = false)
     private User user;
 }

@@ -1,22 +1,25 @@
 package com.murali.placify.entity;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.List;
+
 @Entity
+@Data
 @AllArgsConstructor
 @NoArgsConstructor
-@Data
 public class Department {
 
     @Id
-    @JsonIgnore
-    private Byte id;
 
-    @Column(nullable = false)
-    private String departmentName;
+    @Column(name = "dept_id")
+    private int deptID;
+
+    @Column(name = "dept_name",
+            nullable = false)
+    private String deptName;
 
 }

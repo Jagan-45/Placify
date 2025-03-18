@@ -56,9 +56,9 @@ public class TaskService {
         List<User> foundUsers = userRepository.findAllById(userIds);
         HashMap<UUID, User> userMap = new HashMap<>();
 
-        foundUsers.forEach(user -> userMap.put(user.getId(), user));
+        foundUsers.forEach(user -> userMap.put(user.getUserID(), user));
 
-        Set<UUID> foundUserIds = foundUsers.stream().map(User::getId).collect(Collectors.toSet());
+        Set<UUID> foundUserIds = foundUsers.stream().map(User::getUserID).collect(Collectors.toSet());
 
         userIds.removeAll(foundUserIds);
 

@@ -6,36 +6,61 @@ import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.springframework.core.annotation.Order;
 
+
+import java.util.List;
 import java.util.UUID;
 
-//TODO: Define complete table
 @Entity
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
 @Table(name = "user_table")
 public class User {
-
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
-    private UUID id;
+    @Column(name = "user_id")
+    private UUID userID;
 
-    @Column(nullable = false)
     private String username;
 
-    @Column(nullable = false)
     @JsonIgnore
-    private String email;
+    private String password;
+
+    @Column(nullable = false, unique = true)
+    @JsonIgnore
+    private String mailID;
 
     @Enumerated(EnumType.STRING)
-    @JsonIgnore
+    @Column(nullable = false)
     private Role role;
 
-    private int academicBatch;
+    private boolean enabled;
+
+    @Column(nullable = true)
+    private int year;
+
+    @OneToMany(mappedBy = "createdBy", orphanRemoval = true, cascade = CascadeType.ALL)
+    private List<Problem> problems;
+
+    @OneToMany(mappedBy = "createdBy", orphanRemoval = true, cascade = CascadeType.ALL)
+    private List<Contest> createdContestList;
 
     @ManyToOne
-    @JoinColumn(name = "department_id", referencedColumnName = "id")
+    @JoinColumn(name = "dept_id",
+            referencedColumnName = "dept_id")
     private Department department;
 
+    @ManyToOne
+    @JoinColumn(name = "batch_id", referencedColumnName = "batch_id")
+    private Batch batch;
+
+    @ManyToMany
+    @JoinTable(
+            name = "contest_user",  // Join table name
+            joinColumns = @JoinColumn(name = "user_id"),  // Foreign key in the join table for contest
+            inverseJoinColumns = @JoinColumn(name = "contest_id")  // Foreign key
+    )
+    private List<Contest> assignedContests;
 }
