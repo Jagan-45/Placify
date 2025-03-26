@@ -97,11 +97,11 @@ public class ProblemService {
         } else throw new ProblemNotFountException("No such problem exists");
     }
 
-    public void saveProblemMD(String problemSlug) throws TestcaseException, FileException, ProblemNotFountException {
-        Optional<Problem> optionalProblem = problemRepository.findByProblemSlug(problemSlug);
-        if (optionalProblem.isPresent()) {
-            problemFileHandler.createProblemMd(optionalProblem.get());
-        } else throw new ProblemNotFountException("Cannot create MD file, no such problem exists");
+    public void saveProblemMD(Problem problem) throws TestcaseException, FileException, ProblemNotFountException {
+            problemFileHandler.createProblemMd(problem);
+    }
 
+    public void saveProblemMDFiles(List<Problem> problems) {
+        problems.forEach(this::saveProblemMD);
     }
 }

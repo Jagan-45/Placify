@@ -96,7 +96,7 @@ public class TestcaseFileHandler {
             StringBuffer input = new StringBuffer();
             StringBuffer output = new StringBuffer();
 
-            String folderName = tc.getProblem().getProblemSlug();
+            String folderName = folderNameProvider.getFolderName(tc.getProblem().getProblemSlug());
 
             String INPUT_FILE_PATH = PATH + File.separator + folderName + File.separator + "inputs" + File.separator;
             String OUTPUT_FILE_PATH = PATH + File.separator + folderName + File.separator + "outputs" + File.separator;
@@ -130,6 +130,7 @@ public class TestcaseFileHandler {
 
                 testcaseRespons.add(response);
             } catch (IOException e) {
+                e.printStackTrace();
                 throw new FileException("Cannot read testcase files");
             }
 

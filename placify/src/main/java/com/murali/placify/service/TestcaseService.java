@@ -16,6 +16,7 @@ import com.murali.placify.util.TestcaseFormater;
 import org.springframework.stereotype.Service;
 import com.murali.placify.repository.ProblemRepository;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -56,8 +57,9 @@ public class TestcaseService{
 
     public List<TestcaseResponse> getSampleTestcases(String problemSlug) throws TestcaseException, FileException {
         List<Testcase> testcases = testcaseRepository.findSampleByProblemSlug(problemSlug);
+        System.out.println(testcases);
         if (testcases.isEmpty())
-            throw new TestcaseException("no sample testcases exists");
+            return Collections.emptyList();
         else {
             return testcaseFileHandler.getTestcase(testcases);
         }

@@ -51,7 +51,7 @@ public class ProblemFileHandler {
 
                     String problemMd = "## " + problem.getProblemName()
                             + "\n\n### Description\n" + problem.getDescription()
-                            + "\n\n### Testcase\n" + formatedSampleTestcase + "\n\n### Constraints\n";
+                            + "\n\n### Testcase\n" + formatedSampleTestcase + "\n\n### Constraints\n" + problem.getConstrains();
 
                     bw.write(problemMd);
                     bw.close();

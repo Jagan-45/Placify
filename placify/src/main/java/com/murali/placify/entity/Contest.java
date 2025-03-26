@@ -29,6 +29,8 @@ public class Contest {
     private LocalDateTime startTime;
     @Column(name = "end_time", nullable = false)
     private LocalDateTime endTime;
+
+    @Enumerated(EnumType.STRING)
     private ContestStatus status;
     @ManyToOne
     @JoinColumn(name = "created_by",

@@ -1,9 +1,7 @@
 package com.murali.placify.entity;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import java.util.List;
 import java.util.Set;
@@ -11,7 +9,8 @@ import java.util.UUID;
 
 
 @Entity
-@Data
+@Getter
+@Setter
 @AllArgsConstructor
 @NoArgsConstructor
 public class Problem {
@@ -47,6 +46,8 @@ public class Problem {
 
     @Column(name = "output_field")
     private String outputField;
+
+    private boolean visible;
 
     @ManyToOne
     @JoinColumn(name = "created_by",
