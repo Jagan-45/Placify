@@ -19,6 +19,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.reactive.function.BodyInserters;
 import org.springframework.web.reactive.function.client.WebClient;
 
+import java.sql.SQLException;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.util.*;
@@ -211,5 +212,44 @@ public class TaskService {
     public List<TaskScheduled> getTaskCreatedBy(String id) {
 
         return taskScheduledRepo.findAllByCreatedBy(userService.getUserById(UUID.fromString(id)));
+    }
+
+    public StudentTaskResDto getTaskForStudent(UUID userId, LocalDate date) {
+        Optional<Task> optional = taskRepo.findByAssignedAtAndAssignedTo(date, userService.getUserById(userId));
+        if (optional.isEmpty())
+            throw new IllegalArgumentException("No task for this date");
+
+        Task task = optional.get();
+
+        StudentTaskResDto dto = new StudentTaskResDto();
+        dto.setId(task.getId());
+        dto.setCompleted(task.isCompleted());
+        dto.setProblemLinks(task.getProblemLinks());
+
+        return dto;
+    }
+
+    public StudentTaskResDto trackCompletion(UUID userId, UUID taskId, UUID problemId) {
+        try {
+            Optional<Task> optional = taskRepo.findById(taskId);
+
+            if (optional.isEmpty())
+                throw new IllegalArgumentException("No task for this Id:" + taskId);
+
+            taskRepo.markProblemAsSolved(userId, taskId, problemId);
+
+            Task task = optional.get();
+
+            StudentTaskResDto dto = new StudentTaskResDto();
+            dto.setId(task.getId());
+            dto.setCompleted(task.isCompleted());
+            dto.setProblemLinks(task.getProblemLinks());
+
+            return dto;
+        }
+        catch (Exception e) {
+            System.out.println(e.getMessage());
+            throw new RuntimeException("Cannot track task");
+        }
     }
 }

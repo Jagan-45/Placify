@@ -1,6 +1,7 @@
 package com.murali.placify.controller;
 
 import com.murali.placify.entity.TaskScheduled;
+import com.murali.placify.model.StudentTaskResDto;
 import com.murali.placify.model.TaskCreationDto;
 import com.murali.placify.model.TaskWithProblemLinksDTO;
 import com.murali.placify.response.ApiResponse;
@@ -9,6 +10,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
 
@@ -44,11 +46,23 @@ public class TaskController {
     }
 
     //TODO: should be accessible only for staff login
-    @GetMapping("{id}")
-    public ResponseEntity<ApiResponse> getAutomatedTaskCreation(@PathVariable("id") String id) {
-        List<TaskScheduled> taskScheduledList = taskService.getTaskCreatedBy(id);
+    @GetMapping()
+    public ResponseEntity<ApiResponse> getAutomatedTaskCreation() {
+        List<TaskScheduled> taskScheduledList = taskService.getTaskCreatedBy("50bb1bbd-03df-418b-bf5f-fbff750dde9f");
 
         return new ResponseEntity<>(new ApiResponse("Tasks fetched", taskScheduledList), HttpStatus.OK);
+    }
+
+    @GetMapping("assigned-task/{date}")
+    public ResponseEntity<ApiResponse> getTaskForStudent(@PathVariable("date")LocalDate date) {
+        StudentTaskResDto result = taskService.getTaskForStudent(UUID.fromString("163b9ffb-e691-4628-b0ad-e190b589b446"), date);
+        return new ResponseEntity<>(new ApiResponse("", result), HttpStatus.OK);
+    }
+
+    @PostMapping("/track-status")
+    public ResponseEntity<ApiResponse> trackStatus(@RequestParam("taskId") UUID taskId, @RequestParam("problemId") UUID problemId) {
+        StudentTaskResDto result = taskService.trackCompletion(UUID.fromString("163b9ffb-e691-4628-b0ad-e190b589b446"), taskId, problemId);
+        return new ResponseEntity<>(new ApiResponse("", result), HttpStatus.OK);
     }
 
     //TODO: should be accessible only for staff login and change the response as DTO including userID
