@@ -1,0 +1,39 @@
+services:
+  # Ollama LLM service
+  ollama:
+    image: ollama/ollama:latest
+    container_name: ollama
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+    restart: unless-stopped
+
+  # API endpoint service 
+  api-endpoint:
+    image: alfaarghya/alfa-leetcode-api:2.0.1
+    container_name: alfa-leetcode-api-docker-monish
+    ports:
+      - "3000:3000"
+    restart: always
+    environment:
+      - WDS_SOCKET_HOST=127.0.0.1
+      - CHOKIDAR_USEPOLLING=true
+      - WATCHPACK_POLLING=true
+
+  # Topic recommender 
+  topic-recommender:
+    image: 722e87d1a6ca 
+    container_name: topic-recommender
+    ports:
+      - "8000:8000"
+    environment:
+      - LOCAL_API_URL=http://api-endpoint:3000/problems
+      - OLLAMA_HOST=http://ollama:11434
+    volumes:
+      - ./logs:/app/logs
+    restart: always
+
+volumes:
+  ollama_data:
+    name: ollama_data
