@@ -1,14 +1,19 @@
 package com.murali.placify.service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.murali.placify.Mapper.ProblemMapper;
 import com.murali.placify.entity.Problem;
 import com.murali.placify.exception.*;
 import com.murali.placify.model.ProblemDTO;
+import com.murali.placify.model.ProblemSubmissionDto;
+import com.murali.placify.model.SubmissionResult;
 import com.murali.placify.repository.ProblemRepository;
 import com.murali.placify.response.ProblemResponse;
 import com.murali.placify.response.ProblemSlugResponse;
 import com.murali.placify.util.ProblemFileHandler;
 import com.murali.placify.util.StructureFileHandler;
+import org.aspectj.weaver.ast.Literal;
+import org.springframework.security.core.parameters.P;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -24,13 +29,15 @@ public class ProblemService {
     private final UserService userService;
     private final StructureFileHandler structureFileHandler;
     private final ProblemFileHandler problemFileHandler;
+    private final SubmissionService submissionService;
 
     private final TestcaseService testcaseService;
-    public ProblemService(ProblemRepository problemRepository, UserService userService, StructureFileHandler structureFileHandler, ProblemFileHandler problemFileHandler, TestcaseService testcaseService) {
+    public ProblemService(ProblemRepository problemRepository, UserService userService, StructureFileHandler structureFileHandler, ProblemFileHandler problemFileHandler, SubmissionService submissionService, TestcaseService testcaseService) {
         this.problemRepository = problemRepository;
         this.userService = userService;
         this.structureFileHandler = structureFileHandler;
         this.problemFileHandler = problemFileHandler;
+        this.submissionService = submissionService;
         this.testcaseService = testcaseService;
     }
 
@@ -103,5 +110,17 @@ public class ProblemService {
 
     public void saveProblemMDFiles(List<Problem> problems) {
         problems.forEach(this::saveProblemMD);
+    }
+
+    public List<SubmissionResult> submitCode(ProblemSubmissionDto dto) throws JsonProcessingException {
+        return submissionService.submitCode(dto.getProblemId(), dto.getLanguageId(), dto.getCode());
+    }
+
+    public Problem getProblemById(UUID problemId) {
+        Optional<Problem> optionalProblem = problemRepository.findById(problemId);
+
+        if (optionalProblem.isEmpty())
+            throw new IllegalArgumentException("No problem exists for this ID");
+        return optionalProblem.get();
     }
 }

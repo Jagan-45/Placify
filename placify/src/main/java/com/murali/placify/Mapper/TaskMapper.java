@@ -21,7 +21,7 @@ public class TaskMapper {
         return task;
     }
 
-    public List<TaskLinkPair> bulkTaskWithProblemLinksDTO2Task(List<TaskWithProblemLinksDTO> dtoList, HashMap<UUID, User> userMap) {
+    public List<TaskLinkPair> bulkTaskWithProblemLinksDTO2Task(User createdBy, List<TaskWithProblemLinksDTO> dtoList, HashMap<UUID, User> userMap) {
 
         List<TaskLinkPair> pairs =new ArrayList<>();
 
@@ -30,7 +30,7 @@ public class TaskMapper {
                 Task task = new Task();
                 task.setCreatedAt(LocalDate.now());
                 task.setAssignedAt(dto.getAssignAt());
-                task.setAssignedBy(userMap.get(dto.getUserId()));
+                task.setAssignedBy(createdBy);
                 task.setAssignedTo(userMap.get(dto.getUserId()));
                 pairs.add(new TaskLinkPair(task, dto));
             }

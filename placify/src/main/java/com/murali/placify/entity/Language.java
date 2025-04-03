@@ -9,6 +9,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 @Data
+@Table(name = "languages")
 public class Language {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)

@@ -1,6 +1,7 @@
 package com.murali.placify.service;
 
 import com.murali.placify.entity.Leaderboard;
+import com.murali.placify.entity.User;
 import com.murali.placify.model.LeaderboardFilterDTO;
 import com.murali.placify.repository.LeaderboardRepo;
 import com.murali.placify.repository.specification.LeaderboardSpecification;
@@ -10,8 +11,10 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.UUID;
 
 @Service
 public class LeaderBoardService {
@@ -35,5 +38,14 @@ public class LeaderBoardService {
         return leaderBoardRepo.findAll(spec, pageable);
 
         //return leaderBoardRepo.findAll(spec);
+    }
+
+    public Leaderboard getLeaderboardDataForUserId(UUID userId) {
+        return leaderBoardRepo.findByUser_UserID(userId);
+    }
+
+    @Transactional
+    public void saveRecord(Leaderboard lb) {
+        leaderBoardRepo.save(lb);
     }
 }

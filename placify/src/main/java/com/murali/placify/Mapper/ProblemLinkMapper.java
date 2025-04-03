@@ -2,6 +2,7 @@ package com.murali.placify.Mapper;
 
 import com.murali.placify.entity.ProblemLink;
 import com.murali.placify.entity.Task;
+import com.murali.placify.model.RecommendedProblem;
 import com.murali.placify.model.TaskLinkPair;
 import com.murali.placify.model.TaskWithProblemLinksDTO;
 import org.springframework.stereotype.Component;
@@ -29,9 +30,14 @@ public class ProblemLinkMapper {
             Task u = pair.getTask();
             TaskWithProblemLinksDTO v = pair.getDto();
 
-            List<ProblemLink> problemLinks = new ArrayList<>(v.getLinks().size());
-            for (String link : v.getLinks())
-                problemLinks.add(new ProblemLink(link, u));
+            List<ProblemLink> problemLinks = new ArrayList<>(v.getProblems().size());
+            for (RecommendedProblem problem : v.getProblems()){
+                ProblemLink problemLink = new ProblemLink(problem.getUrl(), u);
+                problemLink.setAcRate(problem.getAcRate());
+                problemLink.setDifficulty(problem.getDifficulty());
+
+                problemLinks.add(problemLink);
+            }
 
             u.setProblemLinks(problemLinks);
             tasks.add(u);

@@ -14,11 +14,12 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
 
-//TODO: Define complete table
+
 @Entity
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
+@Table(name = "tasks")
 public class Task {
 
     @Id
@@ -36,7 +37,7 @@ public class Task {
     private LocalDate completedAt;
 
     @JsonIgnore
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "assigned_to", referencedColumnName = "user_id")
     private User assignedTo;
 
@@ -45,7 +46,12 @@ public class Task {
     @JoinColumn(name = "assigned_by", referencedColumnName = "user_id")
     private User assignedBy;
 
+    @ManyToOne
+    @JoinColumn(name = "associated_task", referencedColumnName = "task_scheduled_id")
+    private TaskScheduled taskScheduled;
+
     @OneToMany(mappedBy = "task", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ProblemLink> problemLinks;
+
 
 }

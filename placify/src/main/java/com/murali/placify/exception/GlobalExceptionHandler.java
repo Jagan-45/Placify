@@ -78,5 +78,9 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(new ApiResponse(ae.getMessage()), HttpStatus.FORBIDDEN);
     }
 
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<ApiResponse> exceptionHandler(Exception e) {
+        return new ResponseEntity<>(new ApiResponse(e.getMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
+    }
 
 }

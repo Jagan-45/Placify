@@ -13,7 +13,7 @@ import java.util.UUID;
 @NoArgsConstructor
 @Getter
 @Setter
-@Table(uniqueConstraints = @UniqueConstraint(columnNames = {"tc_name", "problem_id"}))
+@Table(name = "testcases", uniqueConstraints = @UniqueConstraint(columnNames = {"tc_name", "problem_id"}))
 public class Testcase {
 
     @Id
@@ -27,7 +27,6 @@ public class Testcase {
     private String explanation;
 
     private boolean sample;
-
 
     @ManyToOne
     @JoinColumn(name = "problem_id", referencedColumnName = "problem_id", updatable = false)

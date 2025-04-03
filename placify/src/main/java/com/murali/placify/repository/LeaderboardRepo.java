@@ -11,4 +11,5 @@ import java.util.UUID;
 public interface LeaderboardRepo extends JpaRepository<Leaderboard, UUID>, JpaSpecificationExecutor<Leaderboard> {
 
 
+    Leaderboard findByUser_UserID(UUID userId);
 }

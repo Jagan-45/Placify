@@ -144,6 +144,7 @@ public class UserService {
 
         if (optionalUsers.isEmpty())
             throw new IllegalArgumentException("Invalid batches");
+        System.out.println("----users list---" + optionalUsers.get());
         return optionalUsers.get();
     }
 }

@@ -3,9 +3,7 @@ package com.murali.placify.entity;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.murali.placify.enums.Role;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 import org.springframework.core.annotation.Order;
 
 
@@ -13,10 +11,11 @@ import java.util.List;
 import java.util.UUID;
 
 @Entity
-@Data
+@Getter
+@Setter
 @AllArgsConstructor
 @NoArgsConstructor
-@Table(name = "user_table")
+@Table(name = "users_table")
 public class User {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
@@ -44,8 +43,11 @@ public class User {
     @OneToMany(mappedBy = "createdBy", orphanRemoval = true, cascade = CascadeType.ALL)
     private List<Problem> problems;
 
-    @OneToMany(mappedBy = "createdBy", orphanRemoval = true, cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "createdBy", cascade = CascadeType.ALL)
     private List<Contest> createdContestList;
+
+    @OneToMany(mappedBy = "assignedTo", fetch = FetchType.EAGER)
+    private List<Task> assignedTasks;
 
     @ManyToOne
     @JoinColumn(name = "dept_id",
@@ -56,11 +58,6 @@ public class User {
     @JoinColumn(name = "batch_id", referencedColumnName = "batch_id")
     private Batch batch;
 
-    @ManyToMany
-    @JoinTable(
-            name = "contest_user",  // Join table name
-            joinColumns = @JoinColumn(name = "user_id"),  // Foreign key in the join table for contest
-            inverseJoinColumns = @JoinColumn(name = "contest_id")  // Foreign key
-    )
+    @ManyToMany(mappedBy = "userAssignedTo")
     private List<Contest> assignedContests;
 }

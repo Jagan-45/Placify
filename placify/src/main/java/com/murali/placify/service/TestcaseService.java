@@ -15,10 +15,8 @@ import com.murali.placify.util.TestcaseFileHandler;
 import com.murali.placify.util.TestcaseFormater;
 import org.springframework.stereotype.Service;
 import com.murali.placify.repository.ProblemRepository;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
+
+import java.util.*;
 
 @Service
 public class TestcaseService{
@@ -27,6 +25,7 @@ public class TestcaseService{
     private final ProblemRepository problemRepository;
     private final TestcaseFileHandler testcaseFileHandler;
     private final TestcaseFormater testcaseFormater;
+
 
     public TestcaseService(TestcaseRepository testcaseRepository, ProblemRepository problemRepository, TestcaseFileHandler testcaseFileHandler, TestcaseFormater testcaseFormater) {
         this.testcaseRepository = testcaseRepository;
@@ -65,8 +64,32 @@ public class TestcaseService{
         }
     }
 
+    public List<TestcaseResponse> getAllTestcases(UUID problemId) {
+        Optional<List<Testcase>> testcases = testcaseRepository.findAllByProblemProblemID(problemId);
+        System.out.println("tc--->" + testcases);
+        if (testcases.isEmpty())
+            return Collections.emptyList();
+        else {
+            return testcaseFileHandler.getTestcase(testcases.get());
+        }
+    }
+
     public List<TestcaseSlugResponse> getTestcasesByProblemSlug(String problemSlug) throws TestcaseException {
         Optional<List<Testcase>> optionalTestcases = testcaseRepository.findAllByProblemProblemSlug(problemSlug);
+        if (optionalTestcases.isPresent()) {
+
+            List<Testcase> testcases = optionalTestcases.get();
+            List<TestcaseSlugResponse> responses = new ArrayList<>(testcases.size());
+
+            for (Testcase tc : testcases) {
+                responses.add(new TestcaseSlugResponse(tc.getTcName(), tc.isSample()));
+            }
+            return responses;
+        } else throw new TestcaseException("No testcases found for problem slug");
+    }
+
+    public List<TestcaseSlugResponse> getTestcasesByProblemId(UUID problemID) throws TestcaseException {
+        Optional<List<Testcase>> optionalTestcases = testcaseRepository.findAllByProblemProblemID(problemID);
         if (optionalTestcases.isPresent()) {
 
             List<Testcase> testcases = optionalTestcases.get();
@@ -87,5 +110,4 @@ public class TestcaseService{
         }
         return formatedSampleTestcases;
     }
-
 }

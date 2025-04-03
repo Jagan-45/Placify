@@ -14,6 +14,7 @@ import java.util.UUID;
 @AllArgsConstructor
 @NoArgsConstructor
 @Data
+@Table(name = "leaderboard")
 public class Leaderboard {
 
     @Id
@@ -28,7 +29,7 @@ public class Leaderboard {
     private int taskStreak = 0;
 
     @Column(nullable = false)
-    @Enumerated(EnumType.ORDINAL)
+    @Enumerated(EnumType.STRING)
     private Level level = Level.NEWBIE;
 
     @OneToOne

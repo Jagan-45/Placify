@@ -12,6 +12,7 @@ import java.util.UUID;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
+@Table(name = "submissions")
 public class Submission {
 
     @Id

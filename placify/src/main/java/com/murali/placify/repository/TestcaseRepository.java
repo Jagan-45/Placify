@@ -18,4 +18,6 @@ public interface TestcaseRepository extends JpaRepository<Testcase, UUID> {
     List<Testcase> findSampleByProblemSlug(String problemSlug);
 
     Optional<List<Testcase>> findAllByProblemProblemSlug(String problemSlug);
+
+    Optional<List<Testcase>> findAllByProblemProblemID(UUID problemId);
 }

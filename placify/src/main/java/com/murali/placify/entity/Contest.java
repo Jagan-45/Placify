@@ -15,6 +15,7 @@ import java.util.UUID;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
+@Table(name = "contests")
 public class Contest {
 
     @Id
@@ -34,13 +35,19 @@ public class Contest {
     private ContestStatus status;
     @ManyToOne
     @JoinColumn(name = "created_by",
-            referencedColumnName = "user_id")
+            referencedColumnName = "user_id",
+            nullable = false)
     private User createdBy;
 
-    @ManyToMany(mappedBy = "assignedContests")
+    @ManyToMany(cascade = CascadeType.PERSIST)
+    @JoinTable(
+            name = "contest_user",              // Join table name
+            joinColumns = @JoinColumn(name = "contest_id"),       // Contest foreign key
+            inverseJoinColumns = @JoinColumn(name = "user_id")      // User foreign key
+    )
     private List<User> userAssignedTo;
 
-    @ManyToMany(cascade = CascadeType.ALL)
+    @ManyToMany(cascade = CascadeType.PERSIST)
     @JoinTable(
             name = "contest_problem",  // Join table name
             joinColumns = @JoinColumn(name = "contest_id"),  // Foreign key in the join table for contest

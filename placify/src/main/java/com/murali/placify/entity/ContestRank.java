@@ -14,6 +14,7 @@ import java.util.UUID;
 @AllArgsConstructor
 @NoArgsConstructor
 @Data
+@Table(name = "contest_ranks")
 public class ContestRank {
 
     @Id

@@ -1,5 +1,6 @@
 package com.murali.placify.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -13,6 +14,7 @@ import java.util.UUID;
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
+@Table(name = "problems")
 public class Problem {
 
     @Id
@@ -30,6 +32,7 @@ public class Problem {
     private String description;
 
     @Column(name = "correct_code", length = 3500)
+    @JsonIgnore
     private String correctCode;
 
     @Column(name = "points", nullable = false)
@@ -47,14 +50,18 @@ public class Problem {
     @Column(name = "output_field")
     private String outputField;
 
+    @JsonIgnore
     private boolean visible;
 
+    @JsonIgnore
     @ManyToOne
     @JoinColumn(name = "created_by",
-            referencedColumnName = "user_id")
+            referencedColumnName = "user_id",
+            nullable = false)
     private User createdBy;
 
     @ManyToMany(mappedBy = "problemList")
+    @JsonIgnore
     private Set<Contest> contestSet;
 
 }

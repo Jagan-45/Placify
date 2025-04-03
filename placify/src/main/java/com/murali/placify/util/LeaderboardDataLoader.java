@@ -5,6 +5,7 @@ import com.murali.placify.entity.Leaderboard;
 import com.murali.placify.entity.User;
 import com.murali.placify.enums.Level;
 import com.murali.placify.enums.Role;
+import com.murali.placify.repository.BatchRepository;
 import com.murali.placify.repository.DepartmentRepository;
 import com.murali.placify.repository.LeaderboardRepo;
 import com.murali.placify.repository.UserRepository;
@@ -30,6 +31,9 @@ public class LeaderboardDataLoader {
 
     @Autowired
     private DepartmentRepository departmentRepo;
+
+    @Autowired
+    private BatchRepository batchRepository;
 
     private final Random random = new Random();
 
@@ -80,6 +84,11 @@ public class LeaderboardDataLoader {
             user.setRole(random.nextBoolean() ? Role.ROLE_STUDENT : Role.ROLE_STAFF);
             user.setYear(random.nextInt(10) + 1); // Random batch between 1 and 10
             user.setDepartment(departments.get(random.nextInt(departments.size()))); // Randomly assign a department
+
+            if (i % 2 == 0)
+                user.setBatch(batchRepository.findById(1).get());
+            else user.setBatch(batchRepository.findById(2).get());
+
             userRepository.save(user);
             createdUsers.add(user); // Store the user in the list
         }

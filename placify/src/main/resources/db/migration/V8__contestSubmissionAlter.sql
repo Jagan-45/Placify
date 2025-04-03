@@ -1,0 +1,2 @@
+ALTER TABLE contest_submissions
+DROP CONSTRAINT unique_contest_submission;

@@ -13,7 +13,7 @@ import java.util.UUID;
 @AllArgsConstructor
 @NoArgsConstructor
 public class TaskWithProblemLinksDTO {
-    private List<String> links;
+    private List<RecommendedProblem> problems;
     private UUID userId;
     private LocalDate assignAt;
 }

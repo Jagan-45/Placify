@@ -1,0 +1,1 @@
+ALTER TABLE leaderboard RENAME COLUMN overall_rating TO over_all_rating;
