@@ -14,12 +14,14 @@ import com.murali.placify.repository.ContestSubmissionRepo;
 import com.murali.placify.repository.ContestUserRepo;
 import com.murali.placify.repository.dynamic.ContestLeaderboardRepo;
 import com.murali.placify.scheduler.ContestScheduler;
+import com.murali.placify.security.JwtService;
 import org.quartz.SchedulerException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.*;
 
 @Service
@@ -36,6 +38,7 @@ public class ContestService {
     private final ContestMapper contestMapper;
     private final ContestCache contestCache;
     private final LeaderBoardService leaderBoardService;
+    private final AuthService authService;
 
 
     public ContestService(ProblemService problemService,
@@ -48,7 +51,7 @@ public class ContestService {
                           ContestUserRepo contestUserRepo,
                           ContestMapper contestMapper,
                           ContestCache contestCache,
-                          LeaderBoardService leaderBoardService) {
+                          LeaderBoardService leaderBoardService, AuthService authService) {
         this.problemService = problemService;
         this.userService = userService;
         this.contestRepository = contestRepository;
@@ -60,6 +63,7 @@ public class ContestService {
         this.contestMapper = contestMapper;
         this.contestCache = contestCache;
         this.leaderBoardService = leaderBoardService;
+        this.authService = authService;
     }
 
     @Transactional
@@ -227,15 +231,39 @@ public class ContestService {
     }
 
     @Transactional
-    public ContestResponseDto enterContest(UUID userId, UUID contestId) {
-        ContestUser contestUser = contestUserRepo.findByUser(userService.getUserById(userId));
+    public  Map<String, Object>  enterContest(UUID userId, UUID contestId) {
+        ContestUser contestUser = contestUserRepo.findByContestAndUser(contestRepository.findById(contestId).get(), userService.getUserById(userId));
 
         if ((contestUser.getStatus() == ContestUserStatus.EXITED && contestUser.getExitCount() > 3) || contestUser.getStatus() == ContestUserStatus.SUBMITTED)
             throw new IllegalArgumentException("you have already entered the contest, you cannot enter again");
 
-        contestLeaderboardRepo.insertScore(contestId, userId, 0, "0 minutes");
+        contestLeaderboardRepo.upsertUserScore(contestId, userId, 0, "0 minutes");
         contestUserRepo.updateStatus(contestId, userId, ContestUserStatus.ENTERED.name());
-        return contestMapper.toDto(getContestById(contestId));
+        Contest contest = getContestById(contestId);
+
+        List<Problem> problems = contest.getProblemList();
+
+        List<EnterContestResDto> resDtoList = new ArrayList<>();
+
+        problems.forEach(problem -> {
+            EnterContestResDto dto = new EnterContestResDto();
+            dto.setId(problem.getProblemID());
+            dto.setName(problem.getProblemName());
+            dto.setPoints(problem.getPoints());
+
+            resDtoList.add(dto);
+        });
+
+        LocalDateTime contestEndTime = contest.getEndTime();
+
+        Date contestEndDate = Date.from(contestEndTime.atZone(ZoneId.systemDefault()).toInstant());
+
+        String jwt = authService.generateJwt(userService.getUserById(userId).getMailID(), contestEndDate);
+        Map<String, Object> result = new HashMap<>();
+        result.put("problems", resDtoList);
+        result.put("jwt", jwt);
+
+        return result;
     }
 
     @Transactional

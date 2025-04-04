@@ -1,12 +1,12 @@
 spring:
   datasource: #cloud
-#    url: jdbc:postgresql://dpg-cv78m3gfnakc738i7k9g-a.singapore-postgres.render.com/placify_db_ta3m
-#    username: placify_jm
-#    password: OscJEBiomuP0Q040AyfJ2d4veEJNe95m
+    url: jdbc:postgresql://dpg-cvnnml24d50c73d0hrtg-a.singapore-postgres.render.com/placify_db_vl78
+    username: mj_finalyear
+    password: RaqaBR7bTjhfYTlZMv70Jw8z90596QDI
 
-    url: jdbc:postgresql://localhost:5432/placify_local
-    username: postgres
-    password: murali27#
+#    url: jdbc:postgresql://localhost:5432/placify_local
+#    username: postgres
+#    password: murali27#
   jpa:
     show-sql: true
   flyway:
@@ -28,6 +28,7 @@ spring:
 dev:
   domain-url: localhost:8080/api/v0
   fromMail: expensetracker.nsm.projectet@gmail.com
+  key: "Nm5uMjdvb3gwYmluMTB3c3FpaGVuNDZ6dWdscTQ4ZzduZTN3OGt0eXpvYnM3bGtpdndlamNiOG5qd282bmw2dnJ3aHJyZGJvNm1haWZkcmlkZXl2eDFxbWJ2cDBtOXVmeGJrbGx2Zjlpanoxd3NhZDJ6Nmc3ZDFzbXpnbjZkMmQ="
 
 logging:
   level:

@@ -17,7 +17,7 @@ import java.util.List;
 @Table(name = "batches")
 public class Batch {
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "batch_id")
     private int batchID;
 

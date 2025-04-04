@@ -1,16 +1,20 @@
 package com.murali.placify.service;
 
+import com.mchange.util.AlreadyExistsException;
 import com.murali.placify.Mapper.UserMapper;
+import com.murali.placify.entity.Leaderboard;
 import com.murali.placify.entity.User;
 import com.murali.placify.entity.VerificationToken;
+import com.murali.placify.enums.Level;
 import com.murali.placify.enums.TokenType;
 import com.murali.placify.event.UserRegistrationEvent;
 import com.murali.placify.exception.*;
 import com.murali.placify.model.RegistrationDTO;
+import com.murali.placify.repository.LeaderboardRepo;
 import com.murali.placify.repository.UserRepository;
 import com.murali.placify.repository.VerificationTokenRepository;
+import com.murali.placify.util.UrlCreator;
 import jakarta.servlet.http.HttpServletRequest;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -18,7 +22,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -26,18 +29,20 @@ import java.util.UUID;
 public class UserService {
 
     private final UserRepository userRepository;
-    private final UserMapper userMapper;
-    private final ApplicationEventPublisher applicationEventPublisher;
     private final VerificationTokenRepository verificationTokenRepository;
+    private final ApplicationEventPublisher eventPublisher;
+    private final UserMapper userMapper;
+    private final UrlCreator urlCreator;
+    private final LeaderBoardService leaderBoardService;
 
-    @Value("${dev.domain-url}")
-    private String appURL;
 
-    public UserService(UserRepository userRepository, UserMapper userMapper, ApplicationEventPublisher applicationEventPublisher, VerificationTokenRepository verificationTokenRepository) {
+    public UserService(UserRepository userRepository, VerificationTokenRepository verificationTokenRepository, ApplicationEventPublisher eventPublisher, UserMapper userMapper, UrlCreator urlCreator, LeaderBoardService leaderBoardService) {
         this.userRepository = userRepository;
-        this.userMapper = userMapper;
-        this.applicationEventPublisher = applicationEventPublisher;
         this.verificationTokenRepository = verificationTokenRepository;
+        this.eventPublisher = eventPublisher;
+        this.userMapper = userMapper;
+        this.urlCreator = urlCreator;
+        this.leaderBoardService = leaderBoardService;
     }
 
     public User getUserById(UUID id) throws UserNotFoundException {
@@ -48,96 +53,6 @@ public class UserService {
             throw new UserNotFoundException("No such user exists");
     }
 
-    @Transactional
-    public void registerUser(RegistrationDTO registrationDTO, HttpServletRequest request) throws UserAlreadyExistsException {
-        if (userRepository.existsByMailID(registrationDTO.getMailID()))
-            throw new UserAlreadyExistsException("User with this mail-id already exists");
-
-        User user = userRepository.saveAndFlush(userMapper.registerDtoToUserMapper(registrationDTO));
-        applicationEventPublisher.publishEvent(new UserRegistrationEvent(user, appURL, TokenType.EMAIL_VERIFY));
-    }
-
-    @Transactional(noRollbackFor = TokenGenerationException.class)
-    public String saveVerificationToken(User user, TokenType type) {
-        LocalDateTime NOW = LocalDateTime.now();
-        String TOKEN = UUID.randomUUID().toString();
-
-        VerificationToken token = verificationTokenRepository.findByUser(user);
-
-        if (token == null) {
-            token = new VerificationToken();
-            token.setUser(user);
-            token.setToken(TOKEN);
-            token.setAttempts(1);
-            token.setType(type);
-            token.setLastRequestTime(NOW);
-            token.setBanStartTime(null);
-            return verificationTokenRepository.save(token).getToken();
-        }
-
-        if (token.getBanStartTime() != null) {
-            long minutesSinceBan = Duration.between(token.getBanStartTime(), NOW).toMinutes();
-            if (minutesSinceBan < 60) {
-                throw new TokenGenerationException("Ban not over. Try again after " + (60 - minutesSinceBan) + " minutes.");
-            } else {
-                token.setBanStartTime(null);
-                token.setAttempts(0);
-            }
-        }
-
-        long minutesSinceLastRequest = Duration.between(token.getLastRequestTime(), NOW).toMinutes();
-        if (minutesSinceLastRequest <= 60) {
-            if (token.getAttempts() >= 5) {
-                token.setBanStartTime(NOW);
-                verificationTokenRepository.saveAndFlush(token);
-                throw new TokenGenerationException("Too many attempts. You are banned for 1 hour.");
-            } else {
-                token.setAttempts(token.getAttempts() + 1);
-            }
-        } else {
-            token.setAttempts(1);
-        }
-
-        token.setToken(TOKEN);
-        token.setLastRequestTime(NOW);
-
-        return verificationTokenRepository.save(token).getToken();
-    }
-
-
-    @Transactional
-    public void verifyUserRegistration(String token) {
-        if(Objects.equals(token, ""))
-            throw new InvalidTokenException("Invalid Token");
-
-        Optional<VerificationToken> optional = verificationTokenRepository.findByToken(token);
-
-        if(optional.isEmpty())
-            throw new InvalidTokenException("Invalid Token");
-
-        VerificationToken verificationToken = optional.get();
-
-        if(Duration.between(verificationToken.getExpireTime(), LocalDateTime.now()).toMinutes() > 5)
-            throw new TokenExpiredException("Token Expired");
-
-        User user = verificationToken.getUser();
-        user.setEnabled(true);
-
-        userRepository.save(user);
-
-        verificationTokenRepository.delete(verificationToken);
-    }
-
-
-    public void resendVerificationToken(String token) {
-        Optional<User> optionalUser = verificationTokenRepository.findUserByToken(token);
-        if (optionalUser.isEmpty())
-            throw new TokenGenerationException("Something went wrong try again");
-        User user = optionalUser.get();
-
-        applicationEventPublisher.publishEvent(new UserRegistrationEvent(user, appURL, TokenType.EMAIL_VERIFY));
-    }
-
     public List<User> getUserByBatch(List<String> assignToBatches) {
 
         Optional<List<User>> optionalUsers = userRepository.findByBatch_BatchNameIn(assignToBatches);
@@ -146,5 +61,84 @@ public class UserService {
             throw new IllegalArgumentException("Invalid batches");
         System.out.println("----users list---" + optionalUsers.get());
         return optionalUsers.get();
+    }
+
+    public String registerUser(RegistrationDTO dto, HttpServletRequest request) {
+        Optional<User> optionalUser = userRepository.findByMailID(dto.getMailID());
+
+        if (optionalUser.isPresent()) {
+            User user = optionalUser.get();
+            if (!user.isEnabled()) {
+                eventPublisher.publishEvent(new UserRegistrationEvent(user, urlCreator.createApplicationUrl(request)));
+                return "This Email is already registered, we have sent a verification link to the mail Id";
+            } else throw new UserAlreadyExistsException("Account with this email already exists");
+        } else {
+            User user = saveUser(userMapper.registerDtoToUserMapper(dto));
+            Leaderboard leaderboard = new Leaderboard();
+            leaderboard.setUser(user);
+            leaderboard.setOverAllRating(0);
+            leaderboard.setContestRating(0);
+            leaderboard.setLevel(Level.NEWBIE);
+            leaderboard.setTaskStreak(0);
+            leaderboard.setContestRating(0);
+            leaderBoardService.saveRecord(leaderboard);
+            eventPublisher.publishEvent(new UserRegistrationEvent(user, urlCreator.createApplicationUrl(request)));
+            return "Please verify your account, verification link has been sent to email";
+        }
+
+
+    }
+
+    private User saveUser(User user) {
+        return userRepository.save(user);
+    }
+
+
+    @Transactional
+    public String VerifyUser(String token) {
+        Optional<VerificationToken> optionalToken = verificationTokenRepository.findByToken(token);
+
+        if (optionalToken.isEmpty() || optionalToken.get().getTokenType() != TokenType.EMAIL_VERIFY)
+            throw new IllegalArgumentException("Invalid Verification token, please hit re-send");
+
+        if (Duration.between(optionalToken.get().getCreatedAt(), LocalDateTime.now())
+                .compareTo(Duration.ofMinutes(5)) > 0)
+            throw new IllegalArgumentException("Token Expired, please hit re-send");
+
+        User user = optionalToken.get().getUser();
+
+        if (user.isEnabled()) {
+            throw new IllegalArgumentException("Account already verified, please login");
+        }
+
+        user.setEnabled(true);
+        User user1 = userRepository.save(user);
+
+
+
+        return "Account verification successful";
+    }
+
+    public void resendVerificationToken(String token, HttpServletRequest request) {
+        Optional<VerificationToken> optionalToken = verificationTokenRepository.findByToken(token);
+
+        if (optionalToken.isEmpty())
+            throw new TokenGenerationException("Something went wrong try again, try again");
+        User user = optionalToken.get().getUser();
+
+        eventPublisher.publishEvent(new UserRegistrationEvent(user, urlCreator.createApplicationUrl(request)));
+    }
+
+    public UUID getUserIdByEmail(String mailId) {
+        Optional<User> optionalUser =  userRepository.findByMailID(mailId);
+        if (optionalUser.isEmpty())
+            throw new IllegalArgumentException("No user exits for emailId" + mailId);
+
+        return optionalUser.get().getUserID();
+    }
+
+    @Transactional
+    public void saveUsers(List<User> users) {
+        userRepository.saveAll(users);
     }
 }

@@ -2,53 +2,37 @@ package com.murali.placify.entity;
 
 import com.murali.placify.enums.TokenType;
 import jakarta.persistence.*;
+import jdk.jfr.Enabled;
 import lombok.AllArgsConstructor;
-import lombok.Data;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
 
-
 @Entity
-@Data
+@Table(name = "verification_tokens")
 @AllArgsConstructor
+@NoArgsConstructor
+@Getter
+@Setter
 public class VerificationToken {
-
-    public VerificationToken(){
-        this.expireTime=calculationOfExpiryTime(EXPIRY_TIME);
-    }
-
-    private static final int EXPIRY_TIME = 5;
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
-    private UUID id;
-
-    @Column(nullable = false, unique = true)
-    private String  token;
+    private UUID tokenId;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    private TokenType type;
+    private TokenType tokenType;
 
     @Column(nullable = false)
-    private int attempts;
+    private String token;
 
     @Column(nullable = false)
-    private LocalDateTime lastRequestTime;
+    private LocalDateTime createdAt;
 
-    private LocalDateTime banStartTime;
-
-    @Column(nullable = false)
-    private LocalDateTime expireTime;
-
-    @OneToOne
-    @JoinColumn(name = "user_id",
-            referencedColumnName="user_id",
-            nullable = false)
+    @ManyToOne
+    @JoinColumn(name = "user_id", referencedColumnName = "user_id", nullable = false)
     private User user;
-
-    private LocalDateTime calculationOfExpiryTime(int expiryTime) {
-        return LocalDateTime.now().plusMinutes(expiryTime);
-    }
 }

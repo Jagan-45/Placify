@@ -1,5 +1,6 @@
 package com.murali.placify.repository;
 
+import com.murali.placify.entity.Contest;
 import com.murali.placify.entity.ContestUser;
 import com.murali.placify.entity.ContestUserId;
 import com.murali.placify.entity.User;
@@ -10,6 +11,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.data.repository.query.Param;
 
+import java.util.Optional;
 import java.util.UUID;
 
 public interface ContestUserRepo extends CrudRepository<ContestUser, ContestUserId> {
@@ -21,4 +23,6 @@ public interface ContestUserRepo extends CrudRepository<ContestUser, ContestUser
 
 
     ContestUser findByUser(User userById);
+
+    ContestUser findByContestAndUser(Contest byId, User userById);
 }

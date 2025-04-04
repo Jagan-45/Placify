@@ -2,6 +2,7 @@ package com.murali.placify.exception;
 
 
 import com.murali.placify.response.ApiResponse;
+import io.jsonwebtoken.ExpiredJwtException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.AuthenticationException;
@@ -63,14 +64,19 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(new ApiResponse(tge.getMessage()), HttpStatus.BAD_REQUEST);
     }
 
+    @ExceptionHandler(ExpiredJwtException.class)
+    public ResponseEntity<ApiResponse> handleExpiredJwtException(ExpiredJwtException e) {
+        return new ResponseEntity<>(new ApiResponse("EXPIRED"), HttpStatus.UNAUTHORIZED);
+    }
+
     @ExceptionHandler(InvalidTokenException.class)
     public ResponseEntity<ApiResponse> handleInvalidTokenException(InvalidTokenException ite) {
-        return new ResponseEntity<>(new ApiResponse(ite.getMessage()), HttpStatus.BAD_REQUEST);
+        return new ResponseEntity<>(new ApiResponse("INVALID"), HttpStatus.UNAUTHORIZED);
     }
 
     @ExceptionHandler(TokenExpiredException.class)
     public ResponseEntity<ApiResponse> handleExpiredTokenException(TokenExpiredException tee) {
-        return new ResponseEntity<>(new ApiResponse(tee.getMessage()), HttpStatus.GONE);
+        return new ResponseEntity<>(new ApiResponse("EXPIRED"), HttpStatus.UNAUTHORIZED);
     }
 
     @ExceptionHandler(AuthenticationException.class)
@@ -80,6 +86,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiResponse> exceptionHandler(Exception e) {
+        e.printStackTrace();
         return new ResponseEntity<>(new ApiResponse(e.getMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
     }
 

@@ -22,6 +22,7 @@ public class User {
     @Column(name = "user_id")
     private UUID userID;
 
+    @Column(unique = true)
     private String username;
 
     @JsonIgnore
@@ -41,12 +42,15 @@ public class User {
     private int year;
 
     @OneToMany(mappedBy = "createdBy", orphanRemoval = true, cascade = CascadeType.ALL)
+    @JsonIgnore
     private List<Problem> problems;
 
     @OneToMany(mappedBy = "createdBy", cascade = CascadeType.ALL)
+    @JsonIgnore
     private List<Contest> createdContestList;
 
     @OneToMany(mappedBy = "assignedTo", fetch = FetchType.EAGER)
+    @JsonIgnore
     private List<Task> assignedTasks;
 
     @ManyToOne
@@ -59,5 +63,10 @@ public class User {
     private Batch batch;
 
     @ManyToMany(mappedBy = "userAssignedTo")
+    @JsonIgnore
     private List<Contest> assignedContests;
+
+    @OneToOne(mappedBy = "user")
+    @JsonIgnore
+    private Leaderboard leaderboard;
 }

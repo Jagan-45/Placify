@@ -12,12 +12,12 @@ import org.springframework.context.ApplicationEvent;
 public class UserRegistrationEvent extends ApplicationEvent {
     private User user;
     private String applicationUrl;
-    private TokenType type;
 
-    public UserRegistrationEvent(User user, String applicationUrl, TokenType type) {
+    public UserRegistrationEvent(User user, String applicationUrl) {
         super(user);
-        this.type = type;
-        this.user=user;
-        this.applicationUrl=applicationUrl;
+        this.user = user;
+        this.applicationUrl = applicationUrl;
     }
 }
+
+

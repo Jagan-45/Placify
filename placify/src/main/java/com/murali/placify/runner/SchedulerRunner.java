@@ -16,6 +16,9 @@ import org.springframework.stereotype.Component;
 import java.time.LocalDate;
 import java.util.List;
 
+
+//----------Commented out because of Auth introduced in consitency while testing-----------
+
 @Component
 public class SchedulerRunner implements ApplicationRunner {
 

@@ -52,8 +52,8 @@ public class ProblemService {
 
     public Problem createProblem(ProblemDTO problemDto) throws FileException {
         if (structureFileHandler.saveStructureFile(problemDto)) {
-            if (problemRepository.existsByProblemSlug(problemDto.getProblemSlug()))
-                throw new ProblemAlreadyExistsException("Problem with this slug already exists");
+//            if (problemRepository.existsByProblemSlug(problemDto.getProblemSlug()))
+//                throw new ProblemAlreadyExistsException("Problem with this slug already exists");
 
             Problem problem = ProblemMapper.mapToProblem(problemDto, userService.getUserById(UUID.fromString(problemDto.getCreatedBy())));
             problem.setTestcases(testcaseService.createTestcases(problemDto.getTestcases(), problem));

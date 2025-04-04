@@ -40,6 +40,7 @@ public class UserMapper {
                 throw new ValidationException("enter valid mail-id, unable to fetch department");
             user.setDepartment(optionalDepartment.get());
         }
+        else throw new ValidationException("enter valid mail-id");
 
         return user;
     }

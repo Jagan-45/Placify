@@ -6,8 +6,12 @@ import com.murali.placify.model.TaskCreationDto;
 import com.murali.placify.model.TaskWithProblemLinksDTO;
 import com.murali.placify.response.ApiResponse;
 import com.murali.placify.service.TaskService;
+import com.murali.placify.service.UserService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
@@ -19,17 +23,25 @@ import java.util.UUID;
 public class TaskController {
 
     private final TaskService taskService;
-    public TaskController(TaskService taskService) {
+    public final UserService userService;
+
+    public TaskController(TaskService taskService, UserService userService) {
         this.taskService = taskService;
+        this.userService = userService;
     }
 
+    @PreAuthorize("hasRole('ROLE_STAFF')")
     @PostMapping()
     public ResponseEntity<ApiResponse> automateTaskCreation(@RequestBody TaskCreationDto dto) {
-        TaskScheduled ts = taskService.createTask(UUID.fromString("50bb1bbd-03df-418b-bf5f-fbff750dde9f"), dto);
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String username = authentication.getName();
+        UUID userId = userService.getUserIdByEmail(username);
+
+        TaskScheduled ts = taskService.createTask(userId, dto);
         return new ResponseEntity<>(new ApiResponse("Tasks will be scheduled", ts), HttpStatus.OK);
     }
 
-    //TODO: should be accessible only for staff login
+    @PreAuthorize("hasRole('ROLE_STAFF')")
     @PutMapping("{id}")
     public ResponseEntity<ApiResponse> updateAutomaticTaskCreation(@PathVariable("id") String id, @RequestBody TaskCreationDto dto) {
         TaskScheduled ts = taskService.updateTask(id, dto);
@@ -37,7 +49,7 @@ public class TaskController {
 
     }
 
-    //TODO: should be accessible only for staff login
+    @PreAuthorize("hasRole('ROLE_STAFF')")
     @DeleteMapping("{id}")
     public ResponseEntity<ApiResponse> deleteAutomatedTaskCreation(@PathVariable("id") String id) {
         taskService.deleteTask(id);
@@ -45,23 +57,35 @@ public class TaskController {
         return new ResponseEntity<>(new ApiResponse("Task creation schedule deleted", null), HttpStatus.OK);
     }
 
-    //TODO: should be accessible only for staff login
+    @PreAuthorize("hasRole('ROLE_STAFF')")
     @GetMapping()
     public ResponseEntity<ApiResponse> getAutomatedTaskCreation() {
-        List<TaskScheduled> taskScheduledList = taskService.getTaskCreatedBy("50bb1bbd-03df-418b-bf5f-fbff750dde9f");
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String username = authentication.getName();
+        UUID userId = userService.getUserIdByEmail(username);
+
+        List<TaskScheduled> taskScheduledList = taskService.getTaskCreatedBy(userId.toString());
 
         return new ResponseEntity<>(new ApiResponse("Tasks fetched", taskScheduledList), HttpStatus.OK);
     }
 
     @GetMapping("assigned-task/{date}")
     public ResponseEntity<ApiResponse> getTaskForStudent(@PathVariable("date")LocalDate date) {
-        StudentTaskResDto result = taskService.getTaskForStudent(UUID.fromString("163b9ffb-e691-4628-b0ad-e190b589b446"), date);
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String username = authentication.getName();
+        UUID userId = userService.getUserIdByEmail(username);
+
+        StudentTaskResDto result = taskService.getTaskForStudent(userId, date);
         return new ResponseEntity<>(new ApiResponse("", result), HttpStatus.OK);
     }
 
     @PostMapping("/track-status")
     public ResponseEntity<ApiResponse> trackStatus(@RequestParam("taskId") UUID taskId, @RequestParam("problemId") UUID problemId) {
-        StudentTaskResDto result = taskService.trackCompletion(UUID.fromString("163b9ffb-e691-4628-b0ad-e190b589b446"), taskId, problemId);
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String username = authentication.getName();
+        UUID userId = userService.getUserIdByEmail(username);
+
+        StudentTaskResDto result = taskService.trackCompletion(userId, taskId, problemId);
         return new ResponseEntity<>(new ApiResponse("", result), HttpStatus.OK);
     }
 
