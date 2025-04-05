@@ -13,7 +13,8 @@ public class ContestMapper {
                 contest.getContestID(),
                 contest.getContestName(),
                 contest.getStartTime(),
-                contest.getEndTime()
+                contest.getEndTime(),
+                contest.getStatus()
         );
     }
 

@@ -6,7 +6,6 @@ import com.murali.placify.model.BatchResDto;
 import com.murali.placify.repository.BatchRepository;
 import com.murali.placify.util.ExcelService;
 import org.springframework.stereotype.Service;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.*;
@@ -31,9 +30,10 @@ public class BatchService {
         return batchRepository.saveAll(batches);
     }
 
-    public List<BatchResDto> createBatch(MultipartFile file, String batchName) {
+    public List<BatchResDto> createBatch(UUID userId, MultipartFile file, String batchName) {
         Batch batch = new Batch();
         batch.setBatchName(batchName);
+        batch.setCreatedBy(userService.getUserById(userId));
 
         batchRepository.save(batch);
 
@@ -57,6 +57,32 @@ public class BatchService {
         });
 
         userService.saveUsers(users);
+
+        return result;
+    }
+
+    public List<Map<String, Object>> getAllBatchesCreatedBy(UUID userId) {
+        List<Batch> batches = batchRepository.findAllByCreatedBy(userService.getUserById(userId));
+        List<Map<String, Object>> result = new ArrayList<>();
+
+        batches.forEach(batch -> {
+            List<BatchResDto> batchResDtos = new ArrayList<>();
+
+            List<User> sutudents = batch.getStudents();
+            sutudents.forEach(s -> {
+                BatchResDto dto = new BatchResDto();
+
+                dto.setMailId(s.getMailID());
+                dto.setUsername(s.getUsername());
+                dto.setRating(s.getLeaderboard().getOverAllRating());
+
+                batchResDtos.add(dto);
+            });
+            Map<String, Object> map = new HashMap<>();
+            map.put("batch name", batch.getBatchName());
+            map.put("students", batchResDtos);
+            result.add(map);
+        });
 
         return result;
     }

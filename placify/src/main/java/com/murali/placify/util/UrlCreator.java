@@ -6,9 +6,11 @@ import org.springframework.stereotype.Component;
 @Component
 public class UrlCreator {
     public String createApplicationUrl(HttpServletRequest request) {
-        return "http://"
+        String url = "http://"
                 +request.getServerName()+":"
-                +request.getServerPort()
+                +5173
                 +request.getContextPath();
+        System.out.println(url);
+        return url;
     }
 }

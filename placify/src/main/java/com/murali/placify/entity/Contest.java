@@ -8,6 +8,7 @@ import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -39,13 +40,8 @@ public class Contest {
             nullable = false)
     private User createdBy;
 
-    @ManyToMany(cascade = CascadeType.PERSIST)
-    @JoinTable(
-            name = "contest_user",              // Join table name
-            joinColumns = @JoinColumn(name = "contest_id"),       // Contest foreign key
-            inverseJoinColumns = @JoinColumn(name = "user_id")      // User foreign key
-    )
-    private List<User> userAssignedTo;
+    @OneToMany(mappedBy = "contest", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<ContestUser> userAssignedTo = new ArrayList<>();
 
     @ManyToMany(cascade = CascadeType.PERSIST)
     @JoinTable(

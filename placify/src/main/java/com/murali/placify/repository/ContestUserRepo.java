@@ -11,6 +11,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.data.repository.query.Param;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -25,4 +26,6 @@ public interface ContestUserRepo extends CrudRepository<ContestUser, ContestUser
     ContestUser findByUser(User userById);
 
     ContestUser findByContestAndUser(Contest byId, User userById);
+
+    List<ContestUser> findAllByUser(User userById);
 }

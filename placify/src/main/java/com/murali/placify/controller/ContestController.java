@@ -33,7 +33,7 @@ public class ContestController {
     @PostMapping()
     public ResponseEntity<ApiResponse> createContest(@Valid @RequestBody ContestDto contestDto) {
         System.out.println(contestDto);
-        contestService.CreateContest(contestDto);
+        contestService.createContest(contestDto);
         return new ResponseEntity<>(new ApiResponse("contest created successfully", null), HttpStatus.OK);
     }
 
@@ -104,6 +104,27 @@ public class ContestController {
     @GetMapping("/leaderboard/{id}")
     public ResponseEntity<ApiResponse> getContestLeaderboard(@PathVariable("id") UUID id) {
         return new ResponseEntity<>(new ApiResponse("", contestService.getLeaderboard(id)), HttpStatus.OK);
+    }
+
+    @PreAuthorize("hasRole('ROLE_STAFF')")
+    @GetMapping("/created-contests")
+    public ResponseEntity<ApiResponse> getCreatedContests() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String username = authentication.getName();
+        UUID userId = userService.getUserIdByEmail(username);
+
+        List<ContestResponseDto> res = contestService.getCreatedContest(userId);
+        return new ResponseEntity<>(new ApiResponse("", res), HttpStatus.OK);
+    }
+
+    @GetMapping("/assigned-contests")
+    public ResponseEntity<ApiResponse> getAssignedContests() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String username = authentication.getName();
+        UUID userId = userService.getUserIdByEmail(username);
+
+        List<ContestResponseDto> res = contestService.getAssignedContest(userId);
+        return new ResponseEntity<>(new ApiResponse("", res), HttpStatus.OK);
     }
 
 }

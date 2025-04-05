@@ -31,7 +31,6 @@ public class ContestLeaderboardRepo {
         entityManager.createNativeQuery(sql).executeUpdate();
     }
 
-
     @Transactional
     public void insertScore(UUID contestId, UUID userId, int points, String timeTaken) {
         String tableName = "contest_leaderboard_" + contestId.toString().replace("-", "_");
@@ -45,24 +44,31 @@ public class ContestLeaderboardRepo {
 
     public List<UserScoreDto> getLeaderboard(UUID contestId) {
         String tableName = "contest_leaderboard_" + contestId.toString().replace("-", "_");
-        String sql = "SELECT user_id, points, " +
-                "EXTRACT(HOUR FROM time_taken) || 'h ' || EXTRACT(MINUTE FROM time_taken) || 'm' AS time_taken " +
-                "FROM " + tableName + " ORDER BY points DESC, time_taken ASC";
+        String sql = "SELECT u.username, lb.user_id, lb.points, " +
+                "EXTRACT(HOUR FROM lb.time_taken) || 'h ' || EXTRACT(MINUTE FROM lb.time_taken) || 'm' AS time_taken " +
+                "FROM " + tableName + " lb " +
+                "JOIN users_table u ON lb.user_id = u.user_id " +
+                "ORDER BY lb.points DESC, lb.time_taken ASC";
 
         List<Object[]> results = entityManager.createNativeQuery(sql).getResultList();
 
         return results.stream()
                 .map(obj -> new UserScoreDto(
-                        (UUID) obj[0],
-                        (int) obj[1],
-                        (String) obj[2])) // Now returns formatted "7h 5m"
+                        (String) obj[0],
+                        UUID.fromString(obj[1].toString()),
+                        ((Number) obj[2]).intValue(),
+                        (String) obj[3]))
                 .toList();
     }
+
 
     @Transactional
     public Optional<UserScoreDto> getUserScore(UUID contestId, UUID userId) {
         String tableName = "contest_leaderboard_" + contestId.toString().replace("-", "_");
-        String sql = "SELECT user_id, points, time_taken FROM " + tableName + " WHERE user_id = ?";
+        String sql = "SELECT u.username, lb.user_id, lb.points, lb.time_taken " +
+                "FROM " + tableName + " lb " +
+                "JOIN users_table u ON lb.user_id = u.user_id " +
+                "WHERE lb.user_id = ?";
 
         List<Object[]> result = entityManager.createNativeQuery(sql)
                 .setParameter(1, userId)
@@ -74,18 +80,18 @@ public class ContestLeaderboardRepo {
 
         Object[] row = result.get(0);
 
-        UUID userID = (UUID) row[0];
-        Integer points = (Integer) row[1];
+        String username = (String) row[0];
+        UUID userID = UUID.fromString(row[1].toString());
+        int points = ((Number) row[2]).intValue();
 
         String timeTaken;
-        if (row[2] instanceof PGInterval) {
-            PGInterval interval = (PGInterval) row[2];
+        if (row[3] instanceof PGInterval interval) {
             timeTaken = interval.toString();
         } else {
-            timeTaken = row[2].toString();
+            timeTaken = row[3].toString();
         }
 
-        return Optional.of(new UserScoreDto(userID, points, timeTaken));
+        return Optional.of(new UserScoreDto(username, userID, points, timeTaken));
     }
 
     @Transactional

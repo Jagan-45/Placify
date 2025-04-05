@@ -89,10 +89,6 @@ public class UserService {
 
     }
 
-    private User saveUser(User user) {
-        return userRepository.save(user);
-    }
-
 
     @Transactional
     public String VerifyUser(String token) {
@@ -140,5 +136,9 @@ public class UserService {
     @Transactional
     public void saveUsers(List<User> users) {
         userRepository.saveAll(users);
+    }
+
+    public User saveUser(User user) {
+        return userRepository.save(user);
     }
 }

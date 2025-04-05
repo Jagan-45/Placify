@@ -7,13 +7,18 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 @Repository
 public interface ContestRepository extends JpaRepository<Contest, UUID> {
-    boolean existsByContestIDAndUserAssignedTo_UserID(UUID contestId, UUID userId);
+    //boolean existsByContestIDAndUserAssignedTo_UserID(UUID contestId, UUID userId);
 
     List<Contest> findAllByStatus(ContestStatus contestStatus);
 
     boolean existsByCreatedByAndContestID(User createdBy, UUID contestId);
+
+    Optional<List<Contest>> findAllByCreatedBy(User user);
+
+    //Optional<List<Contest>> findAllByUserAssignedTo(User userById);
 }

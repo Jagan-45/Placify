@@ -12,6 +12,7 @@ import com.murali.placify.model.*;
 import com.murali.placify.repository.ContestRepository;
 import com.murali.placify.repository.ContestSubmissionRepo;
 import com.murali.placify.repository.ContestUserRepo;
+import com.murali.placify.repository.ContestUserRepository;
 import com.murali.placify.repository.dynamic.ContestLeaderboardRepo;
 import com.murali.placify.scheduler.ContestScheduler;
 import com.murali.placify.security.JwtService;
@@ -39,6 +40,7 @@ public class ContestService {
     private final ContestCache contestCache;
     private final LeaderBoardService leaderBoardService;
     private final AuthService authService;
+    private final ContestUserRepository contestUserRepository;
 
 
     public ContestService(ProblemService problemService,
@@ -51,7 +53,7 @@ public class ContestService {
                           ContestUserRepo contestUserRepo,
                           ContestMapper contestMapper,
                           ContestCache contestCache,
-                          LeaderBoardService leaderBoardService, AuthService authService) {
+                          LeaderBoardService leaderBoardService, AuthService authService, ContestUserRepository contestUserRepository) {
         this.problemService = problemService;
         this.userService = userService;
         this.contestRepository = contestRepository;
@@ -64,11 +66,12 @@ public class ContestService {
         this.contestCache = contestCache;
         this.leaderBoardService = leaderBoardService;
         this.authService = authService;
+        this.contestUserRepository = contestUserRepository;
     }
 
     @Transactional
-    public void CreateContest(ContestDto dto) {
-
+    public void createContest(ContestDto dto) {
+        // Create the contest base
         Contest contest = new Contest();
         contest.setContestName(dto.getContestName());
         contest.setCreatedDate(dto.getCreatedAt());
@@ -76,22 +79,49 @@ public class ContestService {
         contest.setEndTime(dto.getEndTime());
         contest.setStatus(ContestStatus.SCHEDULED);
         contest.setCreatedBy(userService.getUserById(dto.getCreatedBy()));
-        contest.setUserAssignedTo(userService.getUserByBatch(dto.getAssignToBatches()));
+
         List<Problem> problems = problemService.createProblems(dto.getProblems());
-        problems.forEach(problem -> problem.setVisible(false));
+        problems.forEach(p -> p.setVisible(false));
         contest.setProblemList(problems);
 
-        Contest c = contestRepository.saveAndFlush(contest);
+        // Save the contest to generate contestID
+        Contest savedContest = contestRepository.saveAndFlush(contest);
+
+        // Create ContestUser entries and maintain bidirectional references
+        List<User> assignedUsers = userService.getUserByBatch(dto.getAssignToBatches());
+        List<ContestUser> contestUsers = new ArrayList<>();
+
+        for (User user : assignedUsers) {
+            ContestUser cu = new ContestUser();
+            cu.setContest(savedContest);
+            cu.setUser(user);
+            cu.setId(new ContestUserId(savedContest.getContestID(), user.getUserID()));
+            cu.setStatus(ContestUserStatus.INACTIVE);
+            cu.setExitCount(0);
+
+            contestUsers.add(cu);
+
+            // Maintain bidirectional mapping
+            user.getContestAssignedTo().add(cu); // already managed by Cascade.ALL
+        }
+
+        // Add ContestUser entries to Contest and save
+        savedContest.getUserAssignedTo().addAll(contestUsers);
+        contestRepository.save(savedContest);
+
+        // Save problems as markdown if needed
         problemService.saveProblemMDFiles(problems);
 
+        // Schedule start and end
         try {
-            contestScheduler.scheduleContestStart(c.getStartTime().toString(), c.getContestID());
-            contestScheduler.scheduleContestEnd(c.getEndTime().toString(), c.getContestID());
+            contestScheduler.scheduleContestStart(savedContest.getStartTime().toString(), savedContest.getContestID());
+            contestScheduler.scheduleContestEnd(savedContest.getEndTime().toString(), savedContest.getContestID());
         } catch (SchedulerException e) {
-            System.out.println(e.getMessage());
-            throw new RuntimeException("Error in creating scheduler");
+            throw new RuntimeException("Error in creating scheduler", e);
         }
     }
+
+
 
     @Transactional
     public void startContest(UUID contestId) {
@@ -169,9 +199,10 @@ public class ContestService {
 
         if (optional.get().getStatus() != ContestStatus.ACTIVE)
             throw new IllegalArgumentException("Contest is not active");
-        if (!contestRepository.existsByContestIDAndUserAssignedTo_UserID(dto.getContestId(), userId))
+        if (!contestUserRepository.existsById(new ContestUserId(dto.getContestId(), userId)))
             throw new IllegalArgumentException("You are not allowed to attend this contest");
-        if (contestUserRepo.findByUser(userService.getUserById(userId)).getStatus() != ContestUserStatus.ENTERED)
+        //Add optional check
+        if (contestUserRepository.findById(new ContestUserId(dto.getContestId(), userId)).orElseThrow().getStatus() != ContestUserStatus.ENTERED)
             throw new IllegalArgumentException("You have exited the contest, you cannot submit problems");
 
         List<SubmissionResult> result = submissionService.ContestSubmission(userId, optional.get(), dto.getProblemId(), dto.getLanguageId(), dto.getCode());
@@ -315,5 +346,35 @@ public class ContestService {
         catch (Exception e) {
             throw new RuntimeException("Cannot delete contest, please try again");
         }
+    }
+
+    public List<ContestResponseDto> getCreatedContest(UUID userId) {
+        Optional<List<Contest>> optional = contestRepository.findAllByCreatedBy(userService.getUserById(userId));
+
+        if (optional.isEmpty() || optional.get().isEmpty())
+            return Collections.emptyList();
+
+        List<ContestResponseDto> responseDtos = new ArrayList<>();
+
+        optional.get().forEach(contest -> {
+            responseDtos.add(contestMapper.toDto(contest));
+        });
+
+        return responseDtos;
+    }
+
+    public List<ContestResponseDto> getAssignedContest(UUID userId) {
+        List<ContestUser> contestUsers = contestUserRepo.findAllByUser(userService.getUserById(userId));
+
+        if (contestUsers.isEmpty())
+            return Collections.emptyList();
+
+        List<ContestResponseDto> responseDtos = new ArrayList<>();
+
+        contestUsers.forEach(cu -> {
+            responseDtos.add(contestMapper.toDto(cu.getContest()));
+        });
+
+        return responseDtos;
     }
 }

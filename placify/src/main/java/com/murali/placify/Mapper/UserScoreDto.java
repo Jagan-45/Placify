@@ -14,6 +14,7 @@ import java.util.UUID;
 @Getter
 @Setter
 public class UserScoreDto {
+    private String username;
     private UUID userId;
     private int points;
     private String timeTaken;

@@ -34,8 +34,15 @@ public class UserMapper {
 
         if(mailSplit.length == 4){
             user.setYear(Integer.parseInt("20" + mailSplit[1].substring(0, 2)));
-            Optional<Department> optionalDepartment = departmentRepository.findByDeptName(mailSplit[1].substring(2, 4).toUpperCase());
-            System.out.println(mailSplit[1].substring(2, 4).toUpperCase());
+            String splitted = mailSplit[1].substring(2);
+            StringBuilder sb = new StringBuilder();
+            for (int i=0;i < splitted.length();i++){
+                if (splitted.charAt(i) != '@')
+                    sb.append(splitted.charAt(i));
+                else break;
+            }
+            Optional<Department> optionalDepartment = departmentRepository.findByDeptName(sb.toString().toUpperCase());
+            System.out.println(sb);
             if(optionalDepartment.isEmpty())
                 throw new ValidationException("enter valid mail-id, unable to fetch department");
             user.setDepartment(optionalDepartment.get());

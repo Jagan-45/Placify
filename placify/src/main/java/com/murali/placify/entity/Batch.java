@@ -27,4 +27,13 @@ public class Batch {
     @ManyToMany(mappedBy = "batches")
     @JsonIgnore
     private List<TaskScheduled> tasksScheduled;
+
+    @ManyToOne
+    @JoinColumn(name = "created_by", referencedColumnName = "user_id")
+    @JsonIgnore
+    private User createdBy;
+
+    @OneToMany(mappedBy = "batch")
+    @JsonIgnore
+    private List<User> students;
 }

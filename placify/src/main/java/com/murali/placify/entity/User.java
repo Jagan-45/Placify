@@ -7,6 +7,7 @@ import lombok.*;
 import org.springframework.core.annotation.Order;
 
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -62,9 +63,8 @@ public class User {
     @JoinColumn(name = "batch_id", referencedColumnName = "batch_id")
     private Batch batch;
 
-    @ManyToMany(mappedBy = "userAssignedTo")
-    @JsonIgnore
-    private List<Contest> assignedContests;
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
+    private List<ContestUser> contestAssignedTo = new ArrayList<>();
 
     @OneToOne(mappedBy = "user")
     @JsonIgnore
