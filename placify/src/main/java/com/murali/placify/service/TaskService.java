@@ -2,10 +2,8 @@ package com.murali.placify.service;
 
 import com.murali.placify.Mapper.ProblemLinkMapper;
 import com.murali.placify.Mapper.TaskMapper;
-import com.murali.placify.entity.Batch;
-import com.murali.placify.entity.Task;
-import com.murali.placify.entity.TaskScheduled;
-import com.murali.placify.entity.User;
+import com.murali.placify.entity.*;
+import com.murali.placify.exception.ProblemNotCompletedException;
 import com.murali.placify.model.*;
 import com.murali.placify.repository.ProblemLinkRepo;
 import com.murali.placify.repository.TaskRepo;
@@ -19,7 +17,6 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.reactive.function.BodyInserters;
 import org.springframework.web.reactive.function.client.WebClient;
 
-import java.sql.SQLException;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.util.*;
@@ -39,8 +36,9 @@ public class TaskService {
     private final TaskScheduler taskScheduler;
     private final TaskScheduledRepo taskScheduledRepo;
     private final BatchService batchService;
+    private final LeetcodeApiService leetcodeApiService;
 
-    public TaskService(TaskRepo taskRepo, UserRepository userRepository, ProblemLinkRepo problemLinksRepo, TaskMapper taskMapper, ProblemLinkMapper problemLinkMapper, UserService userService, LeaderBoardService leaderBoardService, WebClient webClient, GlobalHelper globalHelper, TaskScheduler taskScheduler, TaskScheduledRepo taskScheduledRepo, BatchService batchService) {
+    public TaskService(TaskRepo taskRepo, UserRepository userRepository, ProblemLinkRepo problemLinksRepo, TaskMapper taskMapper, ProblemLinkMapper problemLinkMapper, UserService userService, LeaderBoardService leaderBoardService, WebClient webClient, GlobalHelper globalHelper, TaskScheduler taskScheduler, TaskScheduledRepo taskScheduledRepo, BatchService batchService, LeetcodeApiService leetcodeApiService) {
         this.taskRepo = taskRepo;
         this.userRepository = userRepository;
         this.problemLinksRepo = problemLinksRepo;
@@ -53,6 +51,7 @@ public class TaskService {
         this.taskScheduler = taskScheduler;
         this.taskScheduledRepo = taskScheduledRepo;
         this.batchService = batchService;
+        this.leetcodeApiService = leetcodeApiService;
     }
 
     public TaskScheduled createTask(UUID createdBy, TaskCreationDto dto) {
@@ -67,7 +66,9 @@ public class TaskService {
 
         List<Batch> batches = batchService.findBatchesByName(dto.getBatches());
 
-        batches.forEach(b -> {b.getTasksScheduled().add(ts);});
+        batches.forEach(b -> {
+            b.getTasksScheduled().add(ts);
+        });
         ts.setBatches(batches);
 
         return taskScheduler.scheduleTask(ts, createdBy, dto);
@@ -75,7 +76,7 @@ public class TaskService {
 
     public List<Task> createAutomatedTasks(UUID createdBy, TaskCreationDto dto) {
 
-        List<User> assignToUsers = getUnassignedUsers(userService.getUserByBatch(dto.getBatches()));
+        List<User> assignToUsers = getUnassignedUsers(userService.getUserByBatch(dto.getBatches()), createdBy);
 
         List<TaskRecommenderResDto> responses = new ArrayList<>();
 
@@ -102,13 +103,20 @@ public class TaskService {
 
     }
 
-    private List<User> getUnassignedUsers(List<User> allUsers) {
+    private List<User> getUnassignedUsers(List<User> allUsers, UUID createdBy) {
         return allUsers.stream()
-                .filter(user -> user.getAssignedTasks().stream()
-                        .noneMatch(task -> task.getAssignedAt().isEqual(LocalDate.now()))
+                .filter(user -> user.getAssignedTasks() == null || user.getAssignedTasks().stream()
+                        .noneMatch(task ->
+                                task != null &&
+                                        task.getAssignedAt() != null &&
+                                        task.getAssignedAt().isEqual(LocalDate.now()) &&
+                                        task.getAssignedBy() != null &&
+                                        task.getAssignedBy().getUserID().equals(createdBy)
+                        )
                 )
                 .collect(Collectors.toList());
     }
+
 
     public TaskRecommenderResDto callTaskRecommender(TaskRecommenderDto dto) {
 
@@ -230,26 +238,48 @@ public class TaskService {
     }
 
     public StudentTaskResDto trackCompletion(UUID userId, UUID taskId, UUID problemId) {
-        try {
-            Optional<Task> optional = taskRepo.findById(taskId);
 
-            if (optional.isEmpty())
-                throw new IllegalArgumentException("No task for this Id:" + taskId);
+        Optional<Task> optional = taskRepo.findById(taskId);
 
+        if (optional.isEmpty())
+            throw new IllegalArgumentException("No task for this Id:" + taskId);
+        Task task = optional.get();
+
+        User user = userService.getUserById(userId);
+
+        List<ProblemLink> problemLinks = task.getProblemLinks();
+        String assignedProblem = null;
+
+        for (ProblemLink problemLink : problemLinks) {
+            if (problemLink.getId().compareTo(problemId) == 0)
+                assignedProblem = problemLink.getLink();
+
+        }
+
+        if (assignedProblem == null)
+            throw new IllegalArgumentException("No problem assigned with this ID: " + problemId);
+
+        if (leetcodeApiService.isCompleted(user.getUsername(), assignedProblem, task.getAssignedAt()))
             taskRepo.markProblemAsSolved(userId, taskId, problemId);
 
-            Task task = optional.get();
+        else throw new ProblemNotCompletedException("You have not completed the problem yet");
 
-            StudentTaskResDto dto = new StudentTaskResDto();
-            dto.setId(task.getId());
-            dto.setCompleted(task.isCompleted());
-            dto.setProblemLinks(task.getProblemLinks());
+        StudentTaskResDto dto = new StudentTaskResDto();
 
-            return dto;
+        List<ProblemLink> assignedProblemsAfterUpdate = problemLinksRepo.findAllByTask(task);
+
+        long solvedCount = assignedProblemsAfterUpdate.stream().filter(ProblemLink::isSolved).count();
+
+        if (task.getProblemLinks().size() == solvedCount) {
+            task.setCompleted(true);
+            taskRepo.save(task);
         }
-        catch (Exception e) {
-            System.out.println(e.getMessage());
-            throw new RuntimeException("Cannot track task");
-        }
+
+        dto.setId(task.getId());
+        dto.setCompleted(task.isCompleted());
+        dto.setProblemLinks(assignedProblemsAfterUpdate);
+
+        return dto;
+
     }
 }

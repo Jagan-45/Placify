@@ -29,6 +29,11 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(new ApiResponse("error occurred", errors), HttpStatus.BAD_REQUEST);
     }
 
+    @ExceptionHandler(ProblemNotCompletedException.class)
+    public ResponseEntity<ApiResponse> handleProblemNotCompletedException(ProblemNotCompletedException e) {
+        return new ResponseEntity<>(new ApiResponse(e.getMessage(), null), HttpStatus.BAD_REQUEST);
+    }
+
     @ExceptionHandler(ProblemAlreadyExistsException.class)
     public ResponseEntity<ApiResponse> handleProblemAlreadyException(ProblemAlreadyExistsException pe) {
         return new ResponseEntity<>(new ApiResponse(pe.getMessage()), HttpStatus.BAD_REQUEST);

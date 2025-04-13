@@ -3,6 +3,7 @@ package com.murali.placify.security;
 import com.murali.placify.exception.InvalidTokenException;
 import com.murali.placify.exception.TokenExpiredException;
 import com.murali.placify.response.ApiResponse;
+import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.JwtException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -35,44 +36,40 @@ public class JwtFilter extends OncePerRequestFilter {
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
-        try{
-            if(Arrays.asList(whiteListed).contains(request.getRequestURI())){
-
+        try {
+            if (Arrays.asList(whiteListed).contains(request.getRequestURI())) {
                 filterChain.doFilter(request, response);
                 return;
             }
-            System.out.println(request.getRequestURI());
-            String header= request.getHeader("Authorization");
-            System.out.println(header);
-            if(header == null || !header.startsWith("Bearer "))
-                throw new InvalidTokenException("Invalid Authorization header");
+
+            String header = request.getHeader("Authorization");
+            if (header == null || !header.startsWith("Bearer ")) {
+                throw new JwtException("Invalid Authorization header");
+            }
 
             String jwt = header.substring(7);
 
-            if(jwtService.isTokenExpired(jwt))
-                throw new TokenExpiredException("Jwt expired");
-
-            if (jwtService.verifyToken(jwt)){
-                if(SecurityContextHolder.getContext().getAuthentication() == null){
+            if (jwtService.verifyToken(jwt)) {
+                if (SecurityContextHolder.getContext().getAuthentication() == null) {
                     UserDetails userDetails = userDetailsService.loadUserByUsername(jwtService.getUsername(jwt));
-                    UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(userDetails,null,userDetails.getAuthorities());
+                    UsernamePasswordAuthenticationToken authenticationToken =
+                            new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
                     authenticationToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
                     SecurityContextHolder.getContext().setAuthentication(authenticationToken);
                 }
             }
 
-            doFilter(request, response, filterChain);
-        }
-        catch (TokenExpiredException te){
+            filterChain.doFilter(request, response);
+        } catch (ExpiredJwtException eje) {
             response.setStatus(HttpStatus.UNAUTHORIZED.value());
             response.setContentType("application/json");
             response.getWriter().write(String.valueOf(new ApiResponse("EXPIRED")));
-        }
-        catch (JwtException je){
+        } catch (JwtException je) {
             response.setStatus(HttpStatus.FORBIDDEN.value());
             response.setContentType("application/json");
             response.getWriter().write(String.valueOf(new ApiResponse("INVALID")));
         }
     }
+
 }
 

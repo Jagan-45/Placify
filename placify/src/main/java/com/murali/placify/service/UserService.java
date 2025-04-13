@@ -34,15 +34,17 @@ public class UserService {
     private final UserMapper userMapper;
     private final UrlCreator urlCreator;
     private final LeaderBoardService leaderBoardService;
+    private final LeetcodeApiService leetcodeApiService;
 
 
-    public UserService(UserRepository userRepository, VerificationTokenRepository verificationTokenRepository, ApplicationEventPublisher eventPublisher, UserMapper userMapper, UrlCreator urlCreator, LeaderBoardService leaderBoardService) {
+    public UserService(UserRepository userRepository, VerificationTokenRepository verificationTokenRepository, ApplicationEventPublisher eventPublisher, UserMapper userMapper, UrlCreator urlCreator, LeaderBoardService leaderBoardService, LeetcodeApiService leetcodeApiService) {
         this.userRepository = userRepository;
         this.verificationTokenRepository = verificationTokenRepository;
         this.eventPublisher = eventPublisher;
         this.userMapper = userMapper;
         this.urlCreator = urlCreator;
         this.leaderBoardService = leaderBoardService;
+        this.leetcodeApiService = leetcodeApiService;
     }
 
     public User getUserById(UUID id) throws UserNotFoundException {
@@ -72,7 +74,7 @@ public class UserService {
                 eventPublisher.publishEvent(new UserRegistrationEvent(user, urlCreator.createApplicationUrl(request)));
                 return "This Email is already registered, we have sent a verification link to the mail Id";
             } else throw new UserAlreadyExistsException("Account with this email already exists");
-        } else {
+        } else if(leetcodeApiService.doesUserExist(dto.getUsername())){
             User user = saveUser(userMapper.registerDtoToUserMapper(dto));
             Leaderboard leaderboard = new Leaderboard();
             leaderboard.setUser(user);
@@ -85,7 +87,7 @@ public class UserService {
             eventPublisher.publishEvent(new UserRegistrationEvent(user, urlCreator.createApplicationUrl(request)));
             return "Please verify your account, verification link has been sent to email";
         }
-
+        else throw new IllegalArgumentException("your username and your leetcode username should be same");
 
     }
 
