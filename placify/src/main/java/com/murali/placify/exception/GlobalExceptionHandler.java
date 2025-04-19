@@ -11,6 +11,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -87,6 +88,11 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(AuthenticationException.class)
     public ResponseEntity<ApiResponse> AuthExceptionHandler(AuthenticationException ae){
         return new ResponseEntity<>(new ApiResponse(ae.getMessage()), HttpStatus.FORBIDDEN);
+    }
+
+    @ExceptionHandler(IOException.class)
+    public ResponseEntity<ApiResponse> IOExceptionHandler(IOException e) {
+        return new ResponseEntity<>(new ApiResponse("Something went wrong, please try again", null), HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
     @ExceptionHandler(Exception.class)

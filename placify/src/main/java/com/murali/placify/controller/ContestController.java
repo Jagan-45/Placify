@@ -7,13 +7,19 @@ import com.murali.placify.response.ApiResponse;
 import com.murali.placify.service.ContestService;
 import com.murali.placify.service.UserService;
 import jakarta.validation.Valid;
+import org.springframework.core.io.Resource;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -136,6 +142,19 @@ public class ContestController {
 
         List<ContestResponseDto> res = contestService.getAssignedContest(userId);
         return new ResponseEntity<>(new ApiResponse("", res), HttpStatus.OK);
+    }
+
+    @PreAuthorize("hasRole('ROLE_STAFF')")
+    @GetMapping("leaderboard/download")
+    public ResponseEntity<Resource> downloadFile(@RequestParam("contestId") String contestId) throws IOException {
+
+        Resource resource = contestService.getLeaderboardFile(contestId);
+
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment;filename=leaderboard_" + contestId + ".xlsx")
+                .contentType(MediaType.APPLICATION_OCTET_STREAM)
+                .contentLength(resource.contentLength())
+                .body(resource);
     }
 
 }

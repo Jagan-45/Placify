@@ -8,6 +8,7 @@ import com.murali.placify.entity.*;
 import com.murali.placify.enums.ContestStatus;
 import com.murali.placify.enums.ContestUserStatus;
 import com.murali.placify.enums.SubmissionStatus;
+import com.murali.placify.exception.FileException;
 import com.murali.placify.model.*;
 import com.murali.placify.repository.ContestRepository;
 import com.murali.placify.repository.ContestSubmissionRepo;
@@ -15,10 +16,18 @@ import com.murali.placify.repository.ContestUserRepo;
 import com.murali.placify.repository.ContestUserRepository;
 import com.murali.placify.repository.dynamic.ContestLeaderboardRepo;
 import com.murali.placify.scheduler.ContestScheduler;
+import com.murali.placify.util.ExcelExporter;
 import org.quartz.SchedulerException;
+import org.springframework.core.io.FileSystemResource;
+import org.springframework.core.io.InputStreamResource;
+import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
@@ -41,6 +50,7 @@ public class ContestService {
     private final AuthService authService;
     private final ContestUserRepository contestUserRepository;
     private final ContestCreationHelper contestCreationHelper;
+    private final ExcelExporter excelExporter;
 
 
     public ContestService(ProblemService problemService,
@@ -53,7 +63,7 @@ public class ContestService {
                           ContestUserRepo contestUserRepo,
                           ContestMapper contestMapper,
                           ContestCache contestCache,
-                          LeaderBoardService leaderBoardService, AuthService authService, ContestUserRepository contestUserRepository, ContestCreationHelper contestCreationHelper) {
+                          LeaderBoardService leaderBoardService, AuthService authService, ContestUserRepository contestUserRepository, ContestCreationHelper contestCreationHelper, ExcelExporter excelExporter) {
         this.problemService = problemService;
         this.userService = userService;
         this.contestRepository = contestRepository;
@@ -68,6 +78,7 @@ public class ContestService {
         this.authService = authService;
         this.contestUserRepository = contestUserRepository;
         this.contestCreationHelper = contestCreationHelper;
+        this.excelExporter = excelExporter;
     }
 
     public void createContestAutomated(UUID createdBy, CreateContestDto dto) {
@@ -126,9 +137,6 @@ public class ContestService {
             throw new RuntimeException("Error in creating scheduler", e);
         }
     }
-
-
-
 
     @Transactional
     public void startContest(UUID contestId) {
@@ -192,6 +200,13 @@ public class ContestService {
                     leaderBoardService.saveRecord(lb);
                 }
             }
+        }
+
+        try {
+            getLeaderboardFile(contestId.toString());
+        }
+        catch (Exception e) {
+            System.out.println("Contest ended without creating leaderboard file");
         }
     }
 
@@ -383,5 +398,34 @@ public class ContestService {
         });
 
         return responseDtos;
+    }
+
+    public Resource getLeaderboardFile(String contestId) throws FileNotFoundException {
+        Optional<Contest> optional = contestRepository.findById(UUID.fromString(contestId));
+
+        if (optional.isEmpty())
+            throw new IllegalArgumentException("No contest exists for this ID: "+ contestId);
+
+        if (optional.get().getStatus() == ContestStatus.CLOSED && excelExporter.fileExists(contestId))
+            return new FileSystemResource(excelExporter.getLeaderboardFile(contestId));
+
+        List<UserScoreDto> leaderboardData = contestLeaderboardRepo.getLeaderboard(UUID.fromString(contestId));
+
+        leaderboardData.forEach(dto -> {
+            dto.setMailId(userService.getUserById(dto.getUserId()).getMailID());
+        });
+        try {
+            excelExporter.writeToExcel(leaderboardData, contestId);
+        }
+        catch (IOException | IllegalAccessException e) {
+            e.printStackTrace();
+            throw new RuntimeException("Cannot create leaderboard excel file");
+        }
+
+        File file = excelExporter.getLeaderboardFile(contestId);
+        if (!file.exists()) {
+            throw new RuntimeException("File not found, try again");
+        }
+        return new FileSystemResource(file);
     }
 }
