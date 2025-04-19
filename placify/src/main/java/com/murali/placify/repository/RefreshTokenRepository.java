@@ -19,10 +19,11 @@ public interface RefreshTokenRepository extends JpaRepository<RefreshToken, UUID
     boolean existsByUser(User user);
 
     @Modifying
-    @Query("UPDATE RefreshToken rt SET rt.token = :jwt, rt.refreshTokenExpiryTime = :expiryTime WHERE rt.user = :user")
+    @Query("UPDATE RefreshToken rt SET rt.token = :jwt, rt.refreshTokenExpiryTime = :expiryTime, rt.loggedIn = :flag WHERE rt.user = :user")
     void updateJwtToken(@Param("expiryTime") LocalDateTime expiryTime,
                         @Param("jwt") String jwt,
-                        @Param("user") User user);
+                        @Param("user") User user,
+                        @Param("flag") Boolean flag);
 
     RefreshToken findByUser(User user);
 }

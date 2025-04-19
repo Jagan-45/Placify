@@ -33,7 +33,7 @@ public class AuthService {
         String jwt = jwtService.generateToken(user.get().getUserID(), user.get().getRole(), date);
 
         if(tokenRepository.existsByUser(user.get())){
-            tokenRepository.updateJwtToken(LocalDateTime.now().plusDays(7), jwt, user.get());
+            tokenRepository.updateJwtToken(LocalDateTime.now().plusDays(7), jwt, user.get(), true);
         }
 
         else tokenRepository.save(new RefreshToken(user.get(),jwt, LocalDateTime.now().plusDays(7), true));
@@ -49,7 +49,7 @@ public class AuthService {
             Optional<User> user = userRepository.findById(refreshToken.getUser().getUserID());
             String jwt = jwtService.generateToken(user.get().getUserID(), user.get().getRole(), new Date(System.currentTimeMillis() + 1000 * 60 * 15));
 
-            tokenRepository.updateJwtToken(LocalDateTime.now().plusDays(7), jwt, user.get());
+            tokenRepository.updateJwtToken(LocalDateTime.now().plusDays(7), jwt, user.get(), true);
             return jwt;
         }
 
