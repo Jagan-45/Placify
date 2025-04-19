@@ -12,7 +12,7 @@ import lombok.NoArgsConstructor;
 @Table(name = "languages")
 public class Language {
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "language_id")
     private int langID;
 
@@ -25,4 +25,7 @@ public class Language {
     unique = true,
     nullable = false)
     private int judgeOID;
+
+    @Column(name = "is_archived")
+    private boolean archived;
 }

@@ -15,7 +15,6 @@ import com.murali.placify.repository.ContestUserRepo;
 import com.murali.placify.repository.ContestUserRepository;
 import com.murali.placify.repository.dynamic.ContestLeaderboardRepo;
 import com.murali.placify.scheduler.ContestScheduler;
-import com.murali.placify.security.JwtService;
 import org.quartz.SchedulerException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -41,6 +40,7 @@ public class ContestService {
     private final LeaderBoardService leaderBoardService;
     private final AuthService authService;
     private final ContestUserRepository contestUserRepository;
+    private final ContestCreationHelper contestCreationHelper;
 
 
     public ContestService(ProblemService problemService,
@@ -53,7 +53,7 @@ public class ContestService {
                           ContestUserRepo contestUserRepo,
                           ContestMapper contestMapper,
                           ContestCache contestCache,
-                          LeaderBoardService leaderBoardService, AuthService authService, ContestUserRepository contestUserRepository) {
+                          LeaderBoardService leaderBoardService, AuthService authService, ContestUserRepository contestUserRepository, ContestCreationHelper contestCreationHelper) {
         this.problemService = problemService;
         this.userService = userService;
         this.contestRepository = contestRepository;
@@ -67,6 +67,12 @@ public class ContestService {
         this.leaderBoardService = leaderBoardService;
         this.authService = authService;
         this.contestUserRepository = contestUserRepository;
+        this.contestCreationHelper = contestCreationHelper;
+    }
+
+    public void createContestAutomated(UUID createdBy, CreateContestDto dto) {
+        ContestDto contestDto = contestCreationHelper.createContest(userService.getUserById(createdBy), dto);
+        createContest(contestDto);
     }
 
     @Transactional
@@ -80,6 +86,7 @@ public class ContestService {
         contest.setStatus(ContestStatus.SCHEDULED);
         contest.setCreatedBy(userService.getUserById(dto.getCreatedBy()));
 
+        // Create and associate problems
         List<Problem> problems = problemService.createProblems(dto.getProblems());
         problems.forEach(p -> p.setVisible(false));
         contest.setProblemList(problems);
@@ -87,7 +94,7 @@ public class ContestService {
         // Save the contest to generate contestID
         Contest savedContest = contestRepository.saveAndFlush(contest);
 
-        // Create ContestUser entries and maintain bidirectional references
+        // Create ContestUser entries and assign to contest only
         List<User> assignedUsers = userService.getUserByBatch(dto.getAssignToBatches());
         List<ContestUser> contestUsers = new ArrayList<>();
 
@@ -101,18 +108,17 @@ public class ContestService {
 
             contestUsers.add(cu);
 
-            // Maintain bidirectional mapping
-            user.getContestAssignedTo().add(cu); // already managed by Cascade.ALL
+            // Don't add to user.getContestAssignedTo() to avoid duplicate key error
         }
 
         // Add ContestUser entries to Contest and save
         savedContest.getUserAssignedTo().addAll(contestUsers);
-        contestRepository.save(savedContest);
+        contestRepository.save(savedContest); // Cascade saves ContestUser entities
 
-        // Save problems as markdown if needed
+        // Save problems as markdown
         problemService.saveProblemMDFiles(problems);
 
-        // Schedule start and end
+        // Schedule start and end of contest
         try {
             contestScheduler.scheduleContestStart(savedContest.getStartTime().toString(), savedContest.getContestID());
             contestScheduler.scheduleContestEnd(savedContest.getEndTime().toString(), savedContest.getContestID());
@@ -120,6 +126,7 @@ public class ContestService {
             throw new RuntimeException("Error in creating scheduler", e);
         }
     }
+
 
 
 

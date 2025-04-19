@@ -24,7 +24,7 @@ public class UserMapper {
 
     public User registerDtoToUserMapper(RegistrationDTO registrationDTO){
         User user = new User();
-        user.setUsername(registrationDTO.getUsername());
+        user.setUsername(registrationDTO.getUsername().toLowerCase());
         user.setEnabled(false);
         user.setMailID(registrationDTO.getMailID());
         user.setRole(Role.ROLE_STUDENT);

@@ -29,7 +29,7 @@ public class TaskJob implements Job {
         String cronExp = (String) jobDataMap.get("cronExp");
         TaskScheduled ts = (TaskScheduled) jobDataMap.get("ts");
 
-        List<Task> tasksCreated = taskService.createAutomatedTasks(createdBy, dto);
+        List<Task> tasksCreated = taskService.createAutomatedTasks(createdBy, dto, ts);
 
         taskService.saveAssociatedTasks(ts, tasksCreated, dto, jobId, triggerId, cronExp, createdBy);
     }

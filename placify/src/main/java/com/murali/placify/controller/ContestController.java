@@ -29,11 +29,22 @@ public class ContestController {
         this.userService = userService;
     }
 
+//    @PreAuthorize("hasRole('ROLE_STAFF')")
+//    @PostMapping()
+//    public ResponseEntity<ApiResponse> createContest(@Valid @RequestBody ContestDto contestDto) {
+//        System.out.println(contestDto);
+//        contestService.createContest(contestDto);
+//        return new ResponseEntity<>(new ApiResponse("contest created successfully", null), HttpStatus.OK);
+//    }
+
     @PreAuthorize("hasRole('ROLE_STAFF')")
     @PostMapping()
-    public ResponseEntity<ApiResponse> createContest(@Valid @RequestBody ContestDto contestDto) {
-        System.out.println(contestDto);
-        contestService.createContest(contestDto);
+    public ResponseEntity<ApiResponse> createContest(@Valid @RequestBody CreateContestDto dto) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String username = authentication.getName();
+        UUID userId = userService.getUserIdByEmail(username);
+
+        contestService.createContestAutomated(userId, dto);
         return new ResponseEntity<>(new ApiResponse("contest created successfully", null), HttpStatus.OK);
     }
 

@@ -1,0 +1,2 @@
+ALTER TABLE languages
+ADD COLUMN is_archived BOOLEAN DEFAULT FALSE;

@@ -74,9 +74,9 @@ public class TaskService {
         return taskScheduler.scheduleTask(ts, createdBy, dto);
     }
 
-    public List<Task> createAutomatedTasks(UUID createdBy, TaskCreationDto dto) {
+    public List<Task> createAutomatedTasks(UUID createdBy, TaskCreationDto dto, TaskScheduled ts) {
 
-        List<User> assignToUsers = getUnassignedUsers(userService.getUserByBatch(dto.getBatches()), createdBy);
+        List<User> assignToUsers = getUnassignedUsers(userService.getUserByBatch(dto.getBatches()), createdBy, ts);
 
         List<TaskRecommenderResDto> responses = new ArrayList<>();
 
@@ -103,15 +103,15 @@ public class TaskService {
 
     }
 
-    private List<User> getUnassignedUsers(List<User> allUsers, UUID createdBy) {
+    private List<User> getUnassignedUsers(List<User> allUsers, UUID createdBy, TaskScheduled ts) {
         return allUsers.stream()
                 .filter(user -> user.getAssignedTasks() == null || user.getAssignedTasks().stream()
                         .noneMatch(task ->
                                 task != null &&
                                         task.getAssignedAt() != null &&
                                         task.getAssignedAt().isEqual(LocalDate.now()) &&
-                                        task.getAssignedBy() != null &&
-                                        task.getAssignedBy().getUserID().equals(createdBy)
+                                        task.getTaskScheduled() != null &&
+                                        task.getTaskScheduled().getTaskCreatedID().equals(ts.getTaskCreatedID())
                         )
                 )
                 .collect(Collectors.toList());

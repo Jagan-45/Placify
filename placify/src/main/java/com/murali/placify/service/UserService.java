@@ -19,6 +19,7 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.swing.text.html.Option;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -35,7 +36,6 @@ public class UserService {
     private final UrlCreator urlCreator;
     private final LeaderBoardService leaderBoardService;
     private final LeetcodeApiService leetcodeApiService;
-
 
     public UserService(UserRepository userRepository, VerificationTokenRepository verificationTokenRepository, ApplicationEventPublisher eventPublisher, UserMapper userMapper, UrlCreator urlCreator, LeaderBoardService leaderBoardService, LeetcodeApiService leetcodeApiService) {
         this.userRepository = userRepository;
@@ -67,6 +67,10 @@ public class UserService {
 
     public String registerUser(RegistrationDTO dto, HttpServletRequest request) {
         Optional<User> optionalUser = userRepository.findByMailID(dto.getMailID());
+        Optional<User> optional = userRepository.findByUsername(dto.getUsername().toLowerCase());
+
+        if (optional.isPresent() && optional.get().isEnabled())
+            throw new UserAlreadyExistsException("This username is already taken");
 
         if (optionalUser.isPresent()) {
             User user = optionalUser.get();
@@ -74,6 +78,7 @@ public class UserService {
                 eventPublisher.publishEvent(new UserRegistrationEvent(user, urlCreator.createApplicationUrl(request)));
                 return "This Email is already registered, we have sent a verification link to the mail Id";
             } else throw new UserAlreadyExistsException("Account with this email already exists");
+
         } else if(leetcodeApiService.doesUserExist(dto.getUsername())){
             User user = saveUser(userMapper.registerDtoToUserMapper(dto));
             Leaderboard leaderboard = new Leaderboard();
@@ -129,8 +134,19 @@ public class UserService {
 
     public UUID getUserIdByEmail(String mailId) {
         Optional<User> optionalUser =  userRepository.findByMailID(mailId);
+
         if (optionalUser.isEmpty())
             throw new IllegalArgumentException("No user exits for emailId" + mailId);
+
+        return optionalUser.get().getUserID();
+    }
+
+    public UUID getUserIdByEmailForBatch(String mailId) {
+        Optional<User> optionalUser =  userRepository.findByMailID(mailId);
+
+        //Add log here to log unavilable mailIds
+        if (optionalUser.isEmpty())
+            return null;
 
         return optionalUser.get().getUserID();
     }

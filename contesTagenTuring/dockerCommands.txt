@@ -1,0 +1,9 @@
+
+docker build -t contest-turify-agent:0.7 .
+
+docker container run -p 8033:8000 --env-file .env monishparameswaran/turifing-contest-agent:0.3
+NOTE: YOU SHOULD HAVE THE  .env in the current directory wherever you are executing this command,add the GEMINI_API_KEY.
+
+please add .env file
+GEMINI_API_KEY = "your-api-key-here"
+ to obtain the key please go to the google AI studio,create API key and put it here.

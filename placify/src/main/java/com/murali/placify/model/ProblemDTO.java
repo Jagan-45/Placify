@@ -6,19 +6,20 @@ import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.ToString;
 
 import java.util.List;
 
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
+@ToString
 public class ProblemDTO {
 
     @NotBlank(message = "problem shouldn't be blank")
     private String problemName;
 
     @NotBlank(message = "description shouldn't be blank")
-    @Size(min = 1, max = 1000, message = "Enter description with valid length, length exceeded")
     private String description;
 
     @NotBlank(message = "Slug shouldn't be blank")
