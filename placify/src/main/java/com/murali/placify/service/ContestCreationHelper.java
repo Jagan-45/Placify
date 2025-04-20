@@ -100,10 +100,6 @@ public class ContestCreationHelper {
         ProblemDTO problemDTO = new ProblemDTO();
         problemDTO.setProblemName((String) problemData.get("problemName"));
         problemDTO.setDescription((String) problemData.get("description"));
-
-        String newSlug = (String) problemData.get("problemSlug");
-        problemDTO.setProblemSlug(newSlug);
-
         problemDTO.setInputFields((String) problemData.get("inputFields"));
         problemDTO.setOutputField((String) problemData.get("outputField"));
         problemDTO.setConstrains((String) problemData.get("constraints"));
@@ -123,7 +119,7 @@ public class ContestCreationHelper {
                     testcaseDTO.setSample(Boolean.parseBoolean(sampleValue.toString()));
                 }
                 testcaseDTO.setExplanation((String) tc.get("explanation"));
-                testcaseDTO.setProblemSlug((String) tc.get("problemSlug"));
+                testcaseDTO.setProblemSlug((String) tc.get("problemSlug") + randomUUID);
                 testcaseDTOs.add(testcaseDTO);
             }
         }
@@ -131,5 +127,6 @@ public class ContestCreationHelper {
         problemDTO.setCreatedBy(createdBy.getUserID().toString());
         return problemDTO;
     }
+
 
 }
