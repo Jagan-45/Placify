@@ -202,6 +202,7 @@ public class ContestService {
             getLeaderboardFile(contestId.toString());
         }
         catch (Exception e) {
+            e.printStackTrace();
             System.out.println("Contest ended without creating leaderboard file");
         }
     }

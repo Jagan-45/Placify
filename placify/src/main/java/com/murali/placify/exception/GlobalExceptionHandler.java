@@ -80,6 +80,11 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(new ApiResponse("INVALID"), HttpStatus.UNAUTHORIZED);
     }
 
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<ApiResponse> handleIllegalArgException(IllegalArgumentException e) {
+        return new ResponseEntity<>(new ApiResponse(e.getMessage(), null), HttpStatus.BAD_REQUEST);
+    }
+
     @ExceptionHandler(TokenExpiredException.class)
     public ResponseEntity<ApiResponse> handleExpiredTokenException(TokenExpiredException tee) {
         return new ResponseEntity<>(new ApiResponse("EXPIRED"), HttpStatus.UNAUTHORIZED);
