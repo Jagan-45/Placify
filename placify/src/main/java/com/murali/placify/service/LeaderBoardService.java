@@ -2,6 +2,7 @@ package com.murali.placify.service;
 
 import com.murali.placify.entity.Leaderboard;
 import com.murali.placify.entity.User;
+import com.murali.placify.enums.Level;
 import com.murali.placify.model.LeaderboardFilterDTO;
 import com.murali.placify.repository.LeaderboardRepo;
 import com.murali.placify.repository.specification.LeaderboardSpecification;
@@ -64,5 +65,10 @@ public class LeaderBoardService {
             throw new IllegalArgumentException("No leaderboard data exists for user: " + leaderboard.getUser().getUsername());
 
         return allData.indexOf(leaderboard);
+    }
+
+    public void setLevel(Leaderboard lb) {
+        if (lb.getOverAllRating() >= 150 && lb.getOverAllRating() < 399) lb.setLevel(Level.CODER);
+        else if (lb.getOverAllRating() >= 400) lb.setLevel(Level.MASTER);
     }
 }

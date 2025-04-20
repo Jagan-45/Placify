@@ -4,10 +4,7 @@ import com.murali.placify.Mapper.ContestMapper;
 import com.murali.placify.Mapper.UserScoreDto;
 import com.murali.placify.cache.ContestCache;
 import com.murali.placify.entity.*;
-import com.murali.placify.enums.ContestStatus;
-import com.murali.placify.enums.ContestUserStatus;
-import com.murali.placify.enums.SubmissionStatus;
-import com.murali.placify.enums.SubmissionType;
+import com.murali.placify.enums.*;
 import com.murali.placify.model.*;
 import com.murali.placify.repository.ContestRepository;
 import com.murali.placify.repository.ContestSubmissionRepo;
@@ -169,6 +166,7 @@ public class ContestService {
                 if (lb.getContestRating() > 0) {
                     lb.setContestRating(lb.getContestRating() + 10);
                     lb.setOverAllRating(lb.getOverAllRating() + 10);
+                    leaderBoardService.setLevel(lb);
                     leaderBoardService.saveRecord(lb);
                 }
             });
@@ -178,6 +176,7 @@ public class ContestService {
                 if (lb.getContestRating() > 0) {
                     lb.setContestRating(lb.getContestRating() + 10);
                     lb.setOverAllRating(lb.getOverAllRating() + 10);
+                    leaderBoardService.setLevel(lb);
                     leaderBoardService.saveRecord(lb);
                 }
             });
@@ -195,6 +194,7 @@ public class ContestService {
                 if (lb.getContestRating() > 0) {
                     lb.setContestRating(lb.getContestRating() + pointsDistribution[group]);
                     lb.setOverAllRating(lb.getOverAllRating() + pointsDistribution[group]);
+                    leaderBoardService.setLevel(lb);
                     leaderBoardService.saveRecord(lb);
                 }
             }

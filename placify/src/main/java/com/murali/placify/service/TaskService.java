@@ -300,7 +300,7 @@ public class TaskService {
                 else leaderboard.setTaskStreak(1);
             }
         }
-
+        leaderBoardService.setLevel(leaderboard);
         leaderBoardService.saveRecord(leaderboard);
 
         dto.setId(task.getId());
@@ -328,7 +328,7 @@ public class TaskService {
                             && task.getCompletedAt().equals(task.getAssignedAt()))) {
                 leaderboard.setTaskStreak(0);
             }
-
+            leaderBoardService.setLevel(leaderboard);
             leaderBoardService.saveRecord(leaderboard);
         }
 
