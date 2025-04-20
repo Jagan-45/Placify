@@ -38,6 +38,7 @@ public class TaskScheduler {
         ts.setTriggerKey(triggerId);
         ts.setJobKey(jobId);
         ts.setCronExpression(cronExpression);
+        ts.setTaskName(dto.getTaskName());
 
         TaskScheduled taskScheduled = taskScheduledRepo.save(ts);
 

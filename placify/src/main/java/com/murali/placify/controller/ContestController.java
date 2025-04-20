@@ -1,7 +1,5 @@
 package com.murali.placify.controller;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.murali.placify.Mapper.UserScoreDto;
 import com.murali.placify.model.*;
 import com.murali.placify.response.ApiResponse;
 import com.murali.placify.service.ContestService;
@@ -17,8 +15,6 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
-import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
@@ -55,13 +51,18 @@ public class ContestController {
     }
 
     @PostMapping("/submit-code")
-    public ResponseEntity<ApiResponse> submitCode(@RequestBody ContestSubmissionDto problemSubmissionDto) throws JsonProcessingException {
+    public ResponseEntity<ApiResponse> submitCode(@RequestBody ContestSubmissionDto problemSubmissionDto) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String username = authentication.getName();
         UUID userId = userService.getUserIdByEmail(username);
 
         List<SubmissionResult> submissionResult = contestService.submitContestProblem(userId, problemSubmissionDto);
         return new ResponseEntity<>(new ApiResponse("", submissionResult), HttpStatus.OK);
+    }
+
+    @PostMapping("/submit-sample")
+    public List<SubmissionResult> submitProblemWithTestcase(@RequestBody ProblemSubmissionDto dto)  {
+        return contestService.submitSampleCode(dto);
     }
 
     @PostMapping("/enter-contest/{contestId}")
@@ -75,6 +76,7 @@ public class ContestController {
 
         return new ResponseEntity<>(new ApiResponse("You have entered the contest, please do not leave the contest screen", dto), HttpStatus.OK);
     }
+
 
     @PostMapping("/exit-contest/{contestId}")
     public ResponseEntity<ApiResponse> exitContest(@PathVariable("contestId") UUID contestId) {
@@ -155,6 +157,15 @@ public class ContestController {
                 .contentType(MediaType.APPLICATION_OCTET_STREAM)
                 .contentLength(resource.contentLength())
                 .body(resource);
+    }
+
+    @GetMapping("/past/{contest-id}")
+    public ResponseEntity<ApiResponse> getSubmissions (@PathVariable("contestId") UUID contestId) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String username = authentication.getName();
+        UUID userId = userService.getUserIdByEmail(username);
+
+        return new ResponseEntity<>(new ApiResponse("", contestService.getAccSubmittedCodes(userId, contestId)), HttpStatus.OK);
     }
 
 }

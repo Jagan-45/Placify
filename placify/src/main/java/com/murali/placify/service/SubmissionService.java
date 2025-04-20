@@ -3,6 +3,7 @@ package com.murali.placify.service;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.murali.placify.entity.Contest;
 import com.murali.placify.entity.Testcase;
+import com.murali.placify.enums.SubmissionType;
 import com.murali.placify.model.SubmissionResult;
 import com.murali.placify.response.TestcaseResponse;
 import com.murali.placify.util.SourceCodeModifier;
@@ -26,14 +27,23 @@ public class SubmissionService {
         this.sourceCodeModifier = sourceCodeModifier;
     }
 
-    public List<SubmissionResult> ContestSubmission(UUID userId, Contest contest, UUID problemId, int languageId, String code) throws JsonProcessingException {
-        return submitCode(problemId, languageId, code);
+    public List<SubmissionResult> ContestSubmission(UUID userId, Contest contest, UUID problemId, int languageId, String code) {
+        try {
+            return submitCode(problemId, languageId, code, SubmissionType.COMPLETE);
+        }
+        catch (Exception e) {
+            throw new RuntimeException("try again, an error occurred");
+        }
     }
 
-    public List<SubmissionResult> submitCode(UUID problemId, int languageId, String sourceCode) throws JsonProcessingException {
+    public List<SubmissionResult> submitCode(UUID problemId, int languageId, String sourceCode, SubmissionType type) throws JsonProcessingException {
         String code = sourceCodeModifier.addImports(languageId, sourceCode);
         
-        List<TestcaseResponse> testcaseList = testcaseService.getAllTestcases(problemId);
+        List<TestcaseResponse> testcaseList;
+
+        if (type.equals(SubmissionType.COMPLETE))
+            testcaseList = testcaseService.getAllTestcases(problemId);
+        else testcaseList = testcaseService.getSampleTestcases(problemId);
 
         List<String> inputs = new ArrayList<>(testcaseList.size());
         List<String> outputs = new ArrayList<>(testcaseList.size());

@@ -29,6 +29,9 @@ public class TaskScheduled {
     @Column(name = "task_scheduled_id", nullable = false)
     private UUID taskCreatedID;
 
+    @Column(name = "task_name")
+    private String taskName;
+
     @Column(name = "from_date", nullable = false)
     private LocalDate fromDate;
 

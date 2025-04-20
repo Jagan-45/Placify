@@ -233,6 +233,7 @@ public class TaskService {
         dto.setId(task.getId());
         dto.setCompleted(task.isCompleted());
         dto.setProblemLinks(task.getProblemLinks());
+        dto.setName(task.getTaskScheduled().getTaskName());
 
         return dto;
     }
@@ -315,6 +316,9 @@ public class TaskService {
 
         for (UUID userId : allUserIds) {
             List<Task> tasks = taskRepo.findTaskForUserId(userId);
+
+            if (tasks == null || tasks.isEmpty()) continue;
+
             Leaderboard leaderboard = leaderBoardService.getLeaderboardDataForUserId(userId);
 
             if (!tasks.stream()

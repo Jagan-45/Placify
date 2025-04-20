@@ -44,7 +44,7 @@ public class ProblemFileHandler {
                     BufferedWriter bw = new BufferedWriter(fw);
 
                     StringBuffer formatedSampleTestcase = new StringBuffer();
-                    List<String> formated = testcaseService.formatedSampleTestcases(problem.getProblemSlug());
+                    List<String> formated = testcaseService.formatedSampleTestcases(problem.getProblemID());
                     for (int i = 0; i < formated.size(); i++) {
                         formatedSampleTestcase.append("\n#### Testcase ").append(i + 1).append('\n').append(formated.get(i));
                     }

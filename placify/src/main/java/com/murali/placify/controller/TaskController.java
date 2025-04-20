@@ -7,6 +7,7 @@ import com.murali.placify.model.TaskWithProblemLinksDTO;
 import com.murali.placify.response.ApiResponse;
 import com.murali.placify.service.TaskService;
 import com.murali.placify.service.UserService;
+import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -32,7 +33,7 @@ public class TaskController {
 
     @PreAuthorize("hasRole('ROLE_STAFF')")
     @PostMapping()
-    public ResponseEntity<ApiResponse> automateTaskCreation(@RequestBody TaskCreationDto dto) {
+    public ResponseEntity<ApiResponse> automateTaskCreation(@Valid @RequestBody TaskCreationDto dto) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String username = authentication.getName();
         UUID userId = userService.getUserIdByEmail(username);
@@ -43,7 +44,7 @@ public class TaskController {
 
     @PreAuthorize("hasRole('ROLE_STAFF')")
     @PutMapping("{id}")
-    public ResponseEntity<ApiResponse> updateAutomaticTaskCreation(@PathVariable("id") String id, @RequestBody TaskCreationDto dto) {
+    public ResponseEntity<ApiResponse> updateAutomaticTaskCreation(@Valid @PathVariable("id") String id, @RequestBody TaskCreationDto dto) {
         TaskScheduled ts = taskService.updateTask(id, dto);
         return new ResponseEntity<>(new ApiResponse("Task settings updated", ts), HttpStatus.OK);
 

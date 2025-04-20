@@ -1,6 +1,5 @@
 package com.murali.placify.service;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.murali.placify.Mapper.ContestMapper;
 import com.murali.placify.Mapper.UserScoreDto;
 import com.murali.placify.cache.ContestCache;
@@ -8,7 +7,7 @@ import com.murali.placify.entity.*;
 import com.murali.placify.enums.ContestStatus;
 import com.murali.placify.enums.ContestUserStatus;
 import com.murali.placify.enums.SubmissionStatus;
-import com.murali.placify.exception.FileException;
+import com.murali.placify.enums.SubmissionType;
 import com.murali.placify.model.*;
 import com.murali.placify.repository.ContestRepository;
 import com.murali.placify.repository.ContestSubmissionRepo;
@@ -17,15 +16,14 @@ import com.murali.placify.repository.ContestUserRepository;
 import com.murali.placify.repository.dynamic.ContestLeaderboardRepo;
 import com.murali.placify.scheduler.ContestScheduler;
 import com.murali.placify.util.ExcelExporter;
+import org.apache.poi.sl.draw.geom.GuideIf;
 import org.quartz.SchedulerException;
 import org.springframework.core.io.FileSystemResource;
-import org.springframework.core.io.InputStreamResource;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.time.Duration;
@@ -210,7 +208,7 @@ public class ContestService {
         }
     }
 
-    public List<SubmissionResult> submitContestProblem(UUID userId, ContestSubmissionDto dto) throws JsonProcessingException {
+    public List<SubmissionResult> submitContestProblem(UUID userId, ContestSubmissionDto dto) {
 
         Optional<Contest> optional = contestRepository.findById(dto.getContestId());
         if (optional.isEmpty())
@@ -236,11 +234,13 @@ public class ContestService {
         submission.setContest(optional.get());
         submission.setUser(userService.getUserById(userId));
         submission.setContestSubmissionTime(submittedTime);
+        submission.setCode(dto.getCode());
 
         if (result.stream().allMatch(r ->
                 r.getStatus().getDescription().equals("Accepted")
         )) submission.setStatus(SubmissionStatus.ACCEPTED);
 
+        else submission.setStatus(SubmissionStatus.FAILED);
 
         contestSubmissionRepo.save(submission);
 
@@ -427,5 +427,37 @@ public class ContestService {
             throw new RuntimeException("File not found, try again");
         }
         return new FileSystemResource(file);
+    }
+
+    public List<SubmissionResult> submitSampleCode(ProblemSubmissionDto dto) {
+        try {
+            return submissionService.submitCode(dto.getProblemId(), dto.getLanguageId(), dto.getCode(), SubmissionType.SAMPLE);
+        }
+        catch (Exception e) {
+            throw new RuntimeException("Try again, an error occurred");
+        }
+    }
+
+    public List<Map<String, String>> getAccSubmittedCodes(UUID userId, UUID contestId) {
+        Optional<Contest> optional = contestRepository.findById(contestId);
+        List<Map<String, String>> res = new ArrayList<>();
+
+        if (optional.isEmpty())
+            throw new IllegalArgumentException("no contest exists");
+        if (optional.get().getStatus() != ContestStatus.CLOSED)
+            throw new IllegalArgumentException("Contest is not closed");
+
+        for (Problem p : optional.get().getProblemList()) {
+            String code = contestSubmissionRepo.findFirstAccecptedCodeByUserContestProblem(contestId, userId, p.getProblemID());
+
+            if (code != null) {
+                Map<String, String> map = new HashMap<>();
+                map.put("problemName", p.getProblemName());
+                map.put("code", code);
+                res.add(map);
+            }
+        }
+
+        return res;
     }
 }

@@ -112,10 +112,6 @@ public class ProblemService {
         problems.forEach(this::saveProblemMD);
     }
 
-    public List<SubmissionResult> submitCode(ProblemSubmissionDto dto) throws JsonProcessingException {
-        return submissionService.submitCode(dto.getProblemId(), dto.getLanguageId(), dto.getCode());
-    }
-
     public Problem getProblemById(UUID problemId) {
         Optional<Problem> optionalProblem = problemRepository.findById(problemId);
 

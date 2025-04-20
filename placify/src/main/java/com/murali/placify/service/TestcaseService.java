@@ -64,6 +64,21 @@ public class TestcaseService{
         }
     }
 
+    public List<TestcaseResponse> getSampleTestcases(UUID problemId) {
+        Optional<List<Testcase>> testcases = testcaseRepository.findAllByProblemProblemID(problemId);
+        System.out.println("tc--->" + testcases);
+        if (testcases.isEmpty())
+            return Collections.emptyList();
+        else {
+            List<Testcase> samples = new ArrayList<>();
+            for (Testcase tc : testcases.get())
+                if (tc.isSample())
+                    samples.add(tc);
+
+            return testcaseFileHandler.getTestcase(samples);
+        }
+    }
+
     public List<TestcaseResponse> getAllTestcases(UUID problemId) {
         Optional<List<Testcase>> testcases = testcaseRepository.findAllByProblemProblemID(problemId);
         System.out.println("tc--->" + testcases);
@@ -72,20 +87,6 @@ public class TestcaseService{
         else {
             return testcaseFileHandler.getTestcase(testcases.get());
         }
-    }
-
-    public List<TestcaseSlugResponse> getTestcasesByProblemSlug(String problemSlug) throws TestcaseException {
-        Optional<List<Testcase>> optionalTestcases = testcaseRepository.findAllByProblemProblemSlug(problemSlug);
-        if (optionalTestcases.isPresent()) {
-
-            List<Testcase> testcases = optionalTestcases.get();
-            List<TestcaseSlugResponse> responses = new ArrayList<>(testcases.size());
-
-            for (Testcase tc : testcases) {
-                responses.add(new TestcaseSlugResponse(tc.getTcName(), tc.isSample()));
-            }
-            return responses;
-        } else throw new TestcaseException("No testcases found for problem slug");
     }
 
     public List<TestcaseSlugResponse> getTestcasesByProblemId(UUID problemID) throws TestcaseException {
@@ -102,10 +103,10 @@ public class TestcaseService{
         } else throw new TestcaseException("No testcases found for problem slug");
     }
 
-    public List<String> formatedSampleTestcases(String problemSlug) throws TestcaseException, FileException {
+    public List<String> formatedSampleTestcases(UUID problemId) throws TestcaseException, FileException {
         List<String> formatedSampleTestcases = new ArrayList<>();
 
-        for (TestcaseResponse testcaseResponse : getSampleTestcases(problemSlug)) {
+        for (TestcaseResponse testcaseResponse : getSampleTestcases(problemId)) {
             formatedSampleTestcases.add(testcaseFormater.formatTestcase(testcaseResponse));
         }
         return formatedSampleTestcases;

@@ -14,7 +14,7 @@ import java.util.UUID;
 @NoArgsConstructor
 @Table(name = "contest_submissions")
 /*
- * Stores all accepted solution*/
+ * Stores all submitted solution*/
 public class ContestSubmission {
 
     @Id
@@ -45,4 +45,6 @@ public class ContestSubmission {
     @Enumerated(EnumType.STRING)
     private SubmissionStatus status;
 
+    @Column(name = "code")
+    private String code;
 }

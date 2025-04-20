@@ -14,6 +14,7 @@ import java.util.UUID;
 @Getter
 @Setter
 public class StudentTaskResDto {
+    private String name;
     private UUID id;
     private boolean completed = false;
     private List<ProblemLink> problemLinks;
