@@ -2,6 +2,7 @@ package com.murali.placify.service;
 
 import com.murali.placify.entity.RefreshToken;
 import com.murali.placify.entity.User;
+import com.murali.placify.exception.InvalidRefreshTokenException;
 import com.murali.placify.exception.TokenExpiredException;
 import com.murali.placify.repository.RefreshTokenRepository;
 import com.murali.placify.repository.UserRepository;
@@ -55,7 +56,7 @@ public class AuthService {
             return jwt;
         }
 
-        throw new TokenExpiredException("Invalid JWT or refresh token expired, please login again");
+        throw new InvalidRefreshTokenException("Invalid JWT or refresh token expired, please login again");
     }
 
 }

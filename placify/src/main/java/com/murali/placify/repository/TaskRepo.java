@@ -16,7 +16,7 @@ import java.util.UUID;
 
 @Repository
 public interface TaskRepo extends JpaRepository<Task, UUID> {
-    Optional<Task> findByAssignedAtAndAssignedTo(LocalDate date, User userById);
+    List<Task> findByAssignedAtAndAssignedTo(LocalDate date, User userById);
 
     @Modifying
     @Transactional

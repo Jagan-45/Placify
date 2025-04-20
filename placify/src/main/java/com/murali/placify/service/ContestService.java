@@ -77,13 +77,18 @@ public class ContestService {
     }
 
     public void createContestAutomated(UUID createdBy, CreateContestDto dto) {
+
+        if (dto.getStartTime().isBefore(LocalDateTime.now().plusMinutes(5)))
+            throw new IllegalArgumentException("Please make sure the start time is 5 minutes from now, " +
+                    "this allows the application to generate problems and facilitate other tasks");
+
         ContestDto contestDto = contestCreationHelper.createContest(userService.getUserById(createdBy), dto);
         createContest(contestDto);
     }
 
     @Transactional
     public void createContest(ContestDto dto) {
-        // Create the contest base
+
         Contest contest = new Contest();
         contest.setContestName(dto.getContestName());
         contest.setCreatedDate(dto.getCreatedAt());
@@ -92,15 +97,12 @@ public class ContestService {
         contest.setStatus(ContestStatus.SCHEDULED);
         contest.setCreatedBy(userService.getUserById(dto.getCreatedBy()));
 
-        // Create and associate problems
         List<Problem> problems = problemService.createProblems(dto.getProblems());
         problems.forEach(p -> p.setVisible(false));
         contest.setProblemList(problems);
 
-        // Save the contest to generate contestID
         Contest savedContest = contestRepository.saveAndFlush(contest);
 
-        // Create ContestUser entries and assign to contest only
         List<User> assignedUsers = userService.getUserByBatch(dto.getAssignToBatches());
         List<ContestUser> contestUsers = new ArrayList<>();
 
@@ -114,17 +116,13 @@ public class ContestService {
 
             contestUsers.add(cu);
 
-            // Don't add to user.getContestAssignedTo() to avoid duplicate key error
         }
 
-        // Add ContestUser entries to Contest and save
         savedContest.getUserAssignedTo().addAll(contestUsers);
-        contestRepository.save(savedContest); // Cascade saves ContestUser entities
+        contestRepository.save(savedContest);
 
-        // Save problems as markdown
         problemService.saveProblemMDFiles(problems);
 
-        // Schedule start and end of contest
         try {
             contestScheduler.scheduleContestStart(savedContest.getStartTime().toString(), savedContest.getContestID());
             contestScheduler.scheduleContestEnd(savedContest.getEndTime().toString(), savedContest.getContestID());
@@ -142,7 +140,7 @@ public class ContestService {
 
         Contest contest = optional.get();
         contest.setStatus(ContestStatus.ACTIVE);
-
+        contest.getProblemList().forEach(problem -> problem.setVisible(true));
         contestRepository.save(contest);
     }
 
@@ -155,7 +153,7 @@ public class ContestService {
 
         Contest contest = optional.get();
         contest.setStatus(ContestStatus.CLOSED);
-
+        contest.getProblemList().forEach(problem -> problem.setVisible(false));
         contestRepository.save(contest);
 
         List<UserScoreDto> contestLeaderboard = contestLeaderboardRepo.getLeaderboard(contestId);
@@ -163,7 +161,7 @@ public class ContestService {
         if (contestLeaderboard.size() < 3) {
             contestLeaderboard.forEach(contestant -> {
                 Leaderboard lb = leaderBoardService.getLeaderboardDataForUserId(contestant.getUserId());
-                if (lb.getContestRating() > 0) {
+                if (contestant.getPoints() > 0) {
                     lb.setContestRating(lb.getContestRating() + 10);
                     lb.setOverAllRating(lb.getOverAllRating() + 10);
                     leaderBoardService.setLevel(lb);
@@ -173,7 +171,7 @@ public class ContestService {
         } else {
             contestLeaderboard.subList(0, 3).forEach(contestant -> {
                 Leaderboard lb = leaderBoardService.getLeaderboardDataForUserId(contestant.getUserId());
-                if (lb.getContestRating() > 0) {
+                if (contestant.getPoints() > 0) {
                     lb.setContestRating(lb.getContestRating() + 10);
                     lb.setOverAllRating(lb.getOverAllRating() + 10);
                     leaderBoardService.setLevel(lb);
@@ -191,7 +189,7 @@ public class ContestService {
                 }
 
                 Leaderboard lb = leaderBoardService.getLeaderboardDataForUserId(contestLeaderboard.get(i + 3).getUserId());
-                if (lb.getContestRating() > 0) {
+                if (contestLeaderboard.get(i + 3).getPoints() > 0) {
                     lb.setContestRating(lb.getContestRating() + pointsDistribution[group]);
                     lb.setOverAllRating(lb.getOverAllRating() + pointsDistribution[group]);
                     leaderBoardService.setLevel(lb);
@@ -459,5 +457,26 @@ public class ContestService {
         }
 
         return res;
+    }
+
+    public String getContestProblem(UUID userId, UUID contestId, UUID problemId) {
+
+        User user = userService.getUserById(userId);
+        Contest contest = getContestById(contestId);
+        ContestUser contestUser = contestUserRepo.findByContestAndUser(contest, user);
+
+        if (contestUser == null)
+            throw new IllegalArgumentException("you are not assigned to this contest");
+
+        if (!contestUser.getStatus().equals(ContestUserStatus.ENTERED))
+            throw new IllegalArgumentException("You have not entered the contest");
+
+        List<Problem> problems = contest.getProblemList();
+
+        for (Problem p : problems)
+            if (p.getProblemID().equals(problemId) && p.isVisible()) {
+                return problemService.getMdFile(p.getProblemSlug());
+            }
+        throw new IllegalArgumentException("No problem exits for this ID: " + problemId);
     }
 }

@@ -76,7 +76,7 @@ public class TaskController {
         String username = authentication.getName();
         UUID userId = userService.getUserIdByEmail(username);
 
-        StudentTaskResDto result = taskService.getTaskForStudent(userId, date);
+        List<StudentTaskResDto> result = taskService.getTaskForStudent(userId, date);
         return new ResponseEntity<>(new ApiResponse("", result), HttpStatus.OK);
     }
 

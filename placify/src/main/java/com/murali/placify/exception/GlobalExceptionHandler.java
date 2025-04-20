@@ -95,6 +95,11 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(new ApiResponse("Something went wrong, please try again", null), HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
+    @ExceptionHandler(InvalidRefreshTokenException.class)
+    public ResponseEntity<ApiResponse> invalidRefreshTokenExceptionHandler(InvalidRefreshTokenException e) {
+        return new ResponseEntity<>(new ApiResponse(e.getMessage(), null), HttpStatus.BAD_REQUEST);
+    }
+
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiResponse> exceptionHandler(Exception e) {
         e.printStackTrace();

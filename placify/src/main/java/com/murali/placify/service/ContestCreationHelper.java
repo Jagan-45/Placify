@@ -10,6 +10,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
@@ -89,6 +90,8 @@ public class ContestCreationHelper {
     }
 
     private ProblemDTO mapToProblemDTO(Map<String, Object> generatedProblem, User createdBy) {
+        UUID randomUUID = UUID.randomUUID();
+
         List<Map<String, Object>> problems = (List<Map<String, Object>>) generatedProblem.get("problems");
         if (problems == null || problems.isEmpty()) {
             throw new ContestCreationException("No problem generated in the API response.");
@@ -97,11 +100,14 @@ public class ContestCreationHelper {
         ProblemDTO problemDTO = new ProblemDTO();
         problemDTO.setProblemName((String) problemData.get("problemName"));
         problemDTO.setDescription((String) problemData.get("description"));
-        problemDTO.setProblemSlug((String) problemData.get("problemSlug"));
+
+        String newSlug = (String) problemData.get("problemSlug");
+        problemDTO.setProblemSlug(newSlug);
+
         problemDTO.setInputFields((String) problemData.get("inputFields"));
         problemDTO.setOutputField((String) problemData.get("outputField"));
         problemDTO.setConstrains((String) problemData.get("constraints"));
-        //problemDTO.setPoints(((Number) problemData.get("points")).intValue());
+
         List<Map<String, Object>> testcasesList = (List<Map<String, Object>>) problemData.get("testcases");
         List<TestcaseDTO> testcaseDTOs = new ArrayList<>();
         if (testcasesList != null) {

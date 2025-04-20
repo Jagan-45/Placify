@@ -159,13 +159,24 @@ public class ContestController {
                 .body(resource);
     }
 
-    @GetMapping("/past/{contest-id}")
+    @GetMapping("/past/{contestId}")
     public ResponseEntity<ApiResponse> getSubmissions (@PathVariable("contestId") UUID contestId) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String username = authentication.getName();
         UUID userId = userService.getUserIdByEmail(username);
 
-        return new ResponseEntity<>(new ApiResponse("", contestService.getAccSubmittedCodes(userId, contestId)), HttpStatus.OK);
+        return new ResponseEntity<>(new ApiResponse("", contestService.getAccSubmittedCodes(userId,contestId)), HttpStatus.OK);
+    }
+
+    @GetMapping("/contest-problem")
+    public ResponseEntity<ApiResponse> getContestProblem(@RequestParam("contestId") UUID contestId,
+                                                         @RequestParam("problemId") UUID problemId) {
+
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String username = authentication.getName();
+        UUID userId = userService.getUserIdByEmail(username);
+
+        return new ResponseEntity<>(new ApiResponse("", contestService.getContestProblem(userId, contestId, problemId)), HttpStatus.OK);
     }
 
 }

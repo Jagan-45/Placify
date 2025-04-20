@@ -222,20 +222,24 @@ public class TaskService {
         return taskScheduledRepo.findAllByCreatedBy(userService.getUserById(UUID.fromString(id)));
     }
 
-    public StudentTaskResDto getTaskForStudent(UUID userId, LocalDate date) {
-        Optional<Task> optional = taskRepo.findByAssignedAtAndAssignedTo(date, userService.getUserById(userId));
-        if (optional.isEmpty())
+    public List<StudentTaskResDto> getTaskForStudent(UUID userId, LocalDate date) {
+        List<Task> tasks = taskRepo.findByAssignedAtAndAssignedTo(date, userService.getUserById(userId));
+        if (tasks.isEmpty())
             throw new IllegalArgumentException("No task for this date");
 
-        Task task = optional.get();
+        List<StudentTaskResDto> res = new ArrayList<>();
 
-        StudentTaskResDto dto = new StudentTaskResDto();
-        dto.setId(task.getId());
-        dto.setCompleted(task.isCompleted());
-        dto.setProblemLinks(task.getProblemLinks());
-        dto.setName(task.getTaskScheduled().getTaskName());
+        tasks.forEach(task -> {
+            StudentTaskResDto dto = new StudentTaskResDto();
+            dto.setId(task.getId());
+            dto.setCompleted(task.isCompleted());
+            dto.setProblemLinks(task.getProblemLinks());
+            dto.setName(task.getTaskScheduled().getTaskName());
 
-        return dto;
+            res.add(dto);
+        });
+
+        return res;
     }
 
     @Transactional

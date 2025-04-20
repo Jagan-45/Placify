@@ -32,6 +32,7 @@ public class ProblemService {
     private final SubmissionService submissionService;
 
     private final TestcaseService testcaseService;
+
     public ProblemService(ProblemRepository problemRepository, UserService userService, StructureFileHandler structureFileHandler, ProblemFileHandler problemFileHandler, SubmissionService submissionService, TestcaseService testcaseService) {
         this.problemRepository = problemRepository;
         this.userService = userService;
@@ -51,16 +52,10 @@ public class ProblemService {
     }
 
     public Problem createProblem(ProblemDTO problemDto) throws FileException {
-        if (structureFileHandler.saveStructureFile(problemDto)) {
-//            if (problemRepository.existsByProblemSlug(problemDto.getProblemSlug()))
-//                throw new ProblemAlreadyExistsException("Problem with this slug already exists");
+        Problem problem = ProblemMapper.mapToProblem(problemDto, userService.getUserById(UUID.fromString(problemDto.getCreatedBy())));
+        problem.setTestcases(testcaseService.createTestcases(problemDto.getTestcases(), problem));
 
-            Problem problem = ProblemMapper.mapToProblem(problemDto, userService.getUserById(UUID.fromString(problemDto.getCreatedBy())));
-            problem.setTestcases(testcaseService.createTestcases(problemDto.getTestcases(), problem));
-
-            return problem;
-        } else throw new FileException("cannot create structure file");
-
+        return problem;
     }
 
     public List<Problem> saveProblems(List<Problem> problems) {
@@ -105,7 +100,7 @@ public class ProblemService {
     }
 
     public void saveProblemMD(Problem problem) throws TestcaseException, FileException, ProblemNotFountException {
-            problemFileHandler.createProblemMd(problem);
+        problemFileHandler.createProblemMd(problem);
     }
 
     public void saveProblemMDFiles(List<Problem> problems) {
@@ -118,5 +113,10 @@ public class ProblemService {
         if (optionalProblem.isEmpty())
             throw new IllegalArgumentException("No problem exists for this ID");
         return optionalProblem.get();
+    }
+
+
+    public String getMdFile(String problemSlug) {
+        return problemFileHandler.getMdFile(problemSlug);
     }
 }

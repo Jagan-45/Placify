@@ -43,7 +43,7 @@ public class Contest {
     @OneToMany(mappedBy = "contest", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ContestUser> userAssignedTo = new ArrayList<>();
 
-    @ManyToMany(cascade = CascadeType.PERSIST)
+    @ManyToMany(cascade = CascadeType.ALL)
     @JoinTable(
             name = "contest_problem",  // Join table name
             joinColumns = @JoinColumn(name = "contest_id"),  // Foreign key in the join table for contest

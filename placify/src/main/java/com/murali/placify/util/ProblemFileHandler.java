@@ -6,10 +6,9 @@ import com.murali.placify.exception.TestcaseException;
 import com.murali.placify.service.TestcaseService;
 import org.springframework.stereotype.Component;
 
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
+import java.io.*;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.util.List;
 
 @Component
@@ -67,5 +66,21 @@ public class ProblemFileHandler {
             System.out.println("cannot create folder");
             return false;
         }
+    }
+
+    public String getMdFile(String problemSlug) {
+        String folderName = folderNameProvider.getFolderName(problemSlug);
+        String ROOT_PATH = rootPath.getRootPath() + "placify" + File.separator + "Problems";
+        File file = new File(ROOT_PATH + File.separator + folderName + File.separator + "problem.md");
+
+        if (!file.exists())
+            throw new RuntimeException("No MD file exists; this problem cannot be opened");
+
+        try {
+            return new String(Files.readAllBytes(file.toPath()), StandardCharsets.UTF_8);
+        } catch (IOException e) {
+            throw new RuntimeException("Problem cannot be opened, error in reading MD file", e);
+        }
+
     }
 }
