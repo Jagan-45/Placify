@@ -63,7 +63,7 @@ public class AuthController {
         return new ResponseEntity<>(new ApiResponse("login failed"), HttpStatus.UNAUTHORIZED);
     }
 
-    @GetMapping()
+    @GetMapping("/refresh-token")
     public ResponseEntity<ApiResponse> refreshJwtToken(HttpServletRequest request) {
         String header= request.getHeader("Authorization");
         System.out.println(header);

@@ -26,7 +26,7 @@ public class JwtFilter extends OncePerRequestFilter {
 
     private final JwtService jwtService;
     private final UserDetailsService userDetailsService;
-    private final String[] whiteListed = new String[]{"/api/v0/auth/login", "/api/v0/auth/sign-up", "/api/v0/auth/verify-user", "/api/v0/auth/resend-token"};
+    private final String[] whiteListed = new String[]{"/api/v0/auth/login", "/api/v0/auth/sign-up", "/api/v0/auth/verify-user", "/api/v0/auth/resend-token", "/api/v0/auth/refresh-token"};
 
     public JwtFilter(JwtService jwtService, UserDetailsService userDetailsService) {
         this.jwtService = jwtService;

@@ -1,16 +1,16 @@
 package com.murali.placify.service;
 
-import com.mchange.util.AlreadyExistsException;
 import com.murali.placify.Mapper.UserMapper;
-import com.murali.placify.entity.Leaderboard;
-import com.murali.placify.entity.User;
-import com.murali.placify.entity.VerificationToken;
+import com.murali.placify.entity.*;
 import com.murali.placify.enums.Level;
 import com.murali.placify.enums.TokenType;
 import com.murali.placify.event.UserRegistrationEvent;
 import com.murali.placify.exception.*;
+import com.murali.placify.model.ProfileResDto;
 import com.murali.placify.model.RegistrationDTO;
-import com.murali.placify.repository.LeaderboardRepo;
+import com.murali.placify.model.StaffProfileResDto;
+import com.murali.placify.model.StudentProfileResDto;
+import com.murali.placify.repository.TaskRepo;
 import com.murali.placify.repository.UserRepository;
 import com.murali.placify.repository.VerificationTokenRepository;
 import com.murali.placify.util.UrlCreator;
@@ -19,12 +19,9 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import javax.swing.text.html.Option;
 import java.time.Duration;
 import java.time.LocalDateTime;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 
 @Service
 public class UserService {
@@ -36,8 +33,9 @@ public class UserService {
     private final UrlCreator urlCreator;
     private final LeaderBoardService leaderBoardService;
     private final LeetcodeApiService leetcodeApiService;
+    private final TaskRepo taskRepo;
 
-    public UserService(UserRepository userRepository, VerificationTokenRepository verificationTokenRepository, ApplicationEventPublisher eventPublisher, UserMapper userMapper, UrlCreator urlCreator, LeaderBoardService leaderBoardService, LeetcodeApiService leetcodeApiService) {
+    public UserService(UserRepository userRepository, VerificationTokenRepository verificationTokenRepository, ApplicationEventPublisher eventPublisher, UserMapper userMapper, UrlCreator urlCreator, LeaderBoardService leaderBoardService, LeetcodeApiService leetcodeApiService, TaskRepo taskRepo) {
         this.userRepository = userRepository;
         this.verificationTokenRepository = verificationTokenRepository;
         this.eventPublisher = eventPublisher;
@@ -45,6 +43,7 @@ public class UserService {
         this.urlCreator = urlCreator;
         this.leaderBoardService = leaderBoardService;
         this.leetcodeApiService = leetcodeApiService;
+        this.taskRepo = taskRepo;
     }
 
     public User getUserById(UUID id) throws UserNotFoundException {
@@ -158,5 +157,76 @@ public class UserService {
 
     public User saveUser(User user) {
         return userRepository.save(user);
+    }
+
+    public ProfileResDto getProfileInfo(UUID userId) {
+        User user = getUserById(userId);
+
+        switch (user.getRole()) {
+            case ROLE_STUDENT -> {
+                return getStudentProfile(user);
+            }
+            case ROLE_STAFF -> {
+                return getStaffProfile(user);
+            }
+            default -> {
+                return null;
+            }
+        }
+    }
+
+    private ProfileResDto getStudentProfile(User user) {
+        StudentProfileResDto dto = new StudentProfileResDto();
+
+        dto.setUsername(user.getUsername());
+        dto.setDept(user.getDepartment().getDeptName());
+        dto.setYear(user.getYear());
+        dto.setMailId(user.getMailID());
+        dto.setRating(user.getLeaderboard().getOverAllRating());
+        dto.setGlobalRank(leaderBoardService.getPosition(user.getLeaderboard()));
+        dto.setProblemSolved(getProblemsCompletedCount(user));
+        dto.setTaskStreak(user.getLeaderboard().getTaskStreak());
+
+        return dto;
+    }
+
+    private ProfileResDto getStaffProfile(User user) {
+
+        StaffProfileResDto dto = new StaffProfileResDto();
+
+        dto.setUsername(user.getUsername());
+        dto.setDept(user.getDepartment().getDeptName());
+        dto.setEmailId(user.getMailID());
+        dto.setContestCreated(user.getCreatedContestList().size());
+        dto.setTasksCreated(user.getScheduledTasks().size());
+        dto.setBatchesCreated(user.getBatchesCreated().size());
+
+        int count = 0;
+
+        for (Batch b : user.getBatchesCreated()) {
+            count += b.getStudents().size();
+        }
+
+        dto.setTotalStudentsInAllBatches(count);
+
+        return dto;
+
+        //return userRepository.findStaffProfileByUserId(user.getUserID());
+    }
+
+    private int getProblemsCompletedCount(User user) {
+        List<Task> tasks = taskRepo.findAllByAssignedBy(user);
+
+        int count = 0;
+
+        for (Task t : tasks) {
+            List<ProblemLink> problemLinks = t.getProblemLinks();
+            for (ProblemLink pl : problemLinks) {
+                if (pl.isSolved())
+                    count++;
+            }
+        }
+
+        return count;
     }
 }

@@ -237,6 +237,7 @@ public class TaskService {
         return dto;
     }
 
+    @Transactional
     public StudentTaskResDto trackCompletion(UUID userId, UUID taskId, UUID problemId) {
 
         Optional<Task> optional = taskRepo.findById(taskId);
@@ -259,10 +260,13 @@ public class TaskService {
         if (assignedProblem == null)
             throw new IllegalArgumentException("No problem assigned with this ID: " + problemId);
 
-        if (leetcodeApiService.isCompleted(user.getUsername(), assignedProblem, task.getAssignedAt()))
-            taskRepo.markProblemAsSolved(userId, taskId, problemId);
+        Leaderboard leaderboard = user.getLeaderboard();
 
-        else throw new ProblemNotCompletedException("You have not completed the problem yet");
+        if (leetcodeApiService.isCompleted(user.getUsername(), assignedProblem, task.getAssignedAt())) {
+            taskRepo.markProblemAsSolved(userId, taskId, problemId);
+            leaderboard.setOverAllRating(leaderboard.getOverAllRating() + 5);
+            //leaderBoardService.saveRecord(leaderboard);
+        } else throw new ProblemNotCompletedException("You have not completed the problem yet");
 
         StudentTaskResDto dto = new StudentTaskResDto();
 
@@ -272,14 +276,57 @@ public class TaskService {
 
         if (task.getProblemLinks().size() == solvedCount) {
             task.setCompleted(true);
+            task.setCompletedAt(LocalDate.now());
             taskRepo.save(task);
+
+            List<Task> tasksAssigned = user.getAssignedTasks();
+
+            if (tasksAssigned == null || tasksAssigned.isEmpty())
+                leaderboard.setTaskStreak(1);
+
+            else {
+                List<Task> assignedDayBefore = new ArrayList<>();
+                for (Task t : tasksAssigned) {
+                    if (t.getAssignedAt().equals(task.getAssignedAt().minusDays(1)))
+                        assignedDayBefore.add(t);
+                }
+
+                if (assignedDayBefore.stream().allMatch(task1 -> task1.isCompleted() &&
+                        task.getCompletedAt().equals(task.getAssignedAt())
+                    )
+                )
+                    leaderboard.setTaskStreak(leaderboard.getTaskStreak() + 1);
+                else leaderboard.setTaskStreak(1);
+            }
         }
+
+        leaderBoardService.saveRecord(leaderboard);
 
         dto.setId(task.getId());
         dto.setCompleted(task.isCompleted());
         dto.setProblemLinks(assignedProblemsAfterUpdate);
 
         return dto;
+
+    }
+
+    public void trackTaskStreak() {
+        List<UUID> allUserIds = userRepository.findAllIds();
+
+        for (UUID userId : allUserIds) {
+            List<Task> tasks = taskRepo.findTaskForUserId(userId);
+            Leaderboard leaderboard = leaderBoardService.getLeaderboardDataForUserId(userId);
+
+            if (!tasks.stream()
+                    .allMatch(task -> !task.getAssignedAt().equals(LocalDate.now())
+                            && task.isCompleted()
+                            && task.getCompletedAt() != null
+                            && task.getCompletedAt().equals(task.getAssignedAt()))) {
+                leaderboard.setTaskStreak(0);
+            }
+
+            leaderBoardService.saveRecord(leaderboard);
+        }
 
     }
 }

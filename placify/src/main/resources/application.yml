@@ -26,7 +26,7 @@ spring:
             enable: true
 
 dev:
-  domain-url: localhost:8080/api/v0
+  domain-url: localhost:8081/api/v0
   fromMail: expensetracker.nsm.projectet@gmail.com
   key: "Nm5uMjdvb3gwYmluMTB3c3FpaGVuNDZ6dWdscTQ4ZzduZTN3OGt0eXpvYnM3bGtpdndlamNiOG5qd282bmw2dnJ3aHJyZGJvNm1haWZkcmlkZXl2eDFxbWJ2cDBtOXVmeGJrbGx2Zjlpanoxd3NhZDJ6Nmc3ZDFzbXpnbjZkMmQ="
 
@@ -35,3 +35,6 @@ logging:
     org.quartz.impl.jdbcjobstore: DEBUG
     org.quartz.impl.jdbcjobstore.PostgreSQLDelegate: DEBUG
     org.quartz.impl.jdbcjobstore.JobStoreSupport: DEBUG
+
+server:
+  port: 8081

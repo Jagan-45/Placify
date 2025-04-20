@@ -48,11 +48,11 @@ public class User {
 
     @OneToMany(mappedBy = "createdBy", cascade = CascadeType.ALL)
     @JsonIgnore
-    private List<Contest> createdContestList;
+    private List<Contest> createdContestList = new ArrayList<>();
 
     @OneToMany(mappedBy = "assignedTo", fetch = FetchType.EAGER)
     @JsonIgnore
-    private List<Task> assignedTasks;
+    private List<Task> assignedTasks = new ArrayList<>();
 
     @ManyToOne
     @JoinColumn(name = "dept_id",
@@ -69,4 +69,21 @@ public class User {
     @OneToOne(mappedBy = "user")
     @JsonIgnore
     private Leaderboard leaderboard;
+
+    @OneToMany(mappedBy = "createdBy", cascade = CascadeType.ALL)
+    private List<TaskScheduled> scheduledTasks = new ArrayList<>();
+
+    @OneToMany(mappedBy = "createdBy", cascade = CascadeType.ALL)
+    private List<Batch> batchesCreated = new ArrayList<>();
+
+    //To avoid null pointers on entities created before adding empty list on variable
+    @PostLoad
+    public void init() {
+        if (problems == null) problems = new ArrayList<>();
+        if (createdContestList == null) createdContestList = new ArrayList<>();
+        if (assignedTasks == null) assignedTasks = new ArrayList<>();
+        if (contestAssignedTo == null) contestAssignedTo = new ArrayList<>();
+        if (scheduledTasks == null) scheduledTasks = new ArrayList<>();
+        if (batchesCreated == null) batchesCreated = new ArrayList<>();
+    }
 }

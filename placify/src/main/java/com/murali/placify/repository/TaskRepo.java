@@ -10,6 +10,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDate;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -26,4 +27,10 @@ public interface TaskRepo extends JpaRepository<Task, UUID> {
     int markProblemAsSolved(@Param("userId") UUID userId,
                             @Param("taskId") UUID taskId,
                             @Param("problemId") UUID problemId);
+
+    List<Task> findAllByAssignedBy(User user);
+
+    @Query(value = "SELECT * FROM tasks t WHERE t.assigned_to = :assignedTo", nativeQuery = true)
+    List<Task> findTaskForUserId(@Param("assignedTo") UUID assignedTo);
+
 }

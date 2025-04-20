@@ -7,6 +7,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Entity
@@ -35,5 +36,13 @@ public class Batch {
 
     @OneToMany(mappedBy = "batch")
     @JsonIgnore
-    private List<User> students;
+    private List<User> students = new ArrayList<>();
+
+    // To avoid null pointers on entities created before adding empty list on variable
+    @PostLoad
+    public void init() {
+        if (students == null) {
+            students = new ArrayList<>();
+        }
+    }
 }

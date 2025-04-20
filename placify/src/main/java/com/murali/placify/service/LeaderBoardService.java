@@ -14,6 +14,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 @Service
@@ -47,5 +48,21 @@ public class LeaderBoardService {
     @Transactional
     public void saveRecord(Leaderboard lb) {
         leaderBoardRepo.save(lb);
+    }
+
+    public List<Leaderboard> getLeaderBoard() {
+        List<Leaderboard> leaderboards = leaderBoardRepo.findAll();
+        leaderboards.sort((a, b) -> b.getOverAllRating() - a.getOverAllRating());
+
+        return leaderboards;
+    }
+
+    public int getPosition(Leaderboard leaderboard) {
+        List<Leaderboard> allData = getLeaderBoard();
+
+        if (!allData.contains(leaderboard))
+            throw new IllegalArgumentException("No leaderboard data exists for user: " + leaderboard.getUser().getUsername());
+
+        return allData.indexOf(leaderboard);
     }
 }

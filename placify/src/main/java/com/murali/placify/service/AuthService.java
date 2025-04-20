@@ -6,6 +6,7 @@ import com.murali.placify.exception.TokenExpiredException;
 import com.murali.placify.repository.RefreshTokenRepository;
 import com.murali.placify.repository.UserRepository;
 import com.murali.placify.security.JwtService;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -40,11 +41,12 @@ public class AuthService {
         return jwt;
     }
 
+    @Transactional
     public String generateNewToken(String token) {
 
         Optional<RefreshToken> optional = tokenRepository.findByToken(token);
 
-        if (optional.isPresent() && optional.get().getRefreshTokenExpiryTime().isBefore(LocalDateTime.now()) && optional.get().isLoggedIn()) {
+        if (optional.isPresent() && optional.get().getRefreshTokenExpiryTime().isAfter(LocalDateTime.now()) && optional.get().isLoggedIn()) {
             RefreshToken refreshToken = optional.get();
             Optional<User> user = userRepository.findById(refreshToken.getUser().getUserID());
             String jwt = jwtService.generateToken(user.get().getUserID(), user.get().getRole(), new Date(System.currentTimeMillis() + 1000 * 60 * 15));

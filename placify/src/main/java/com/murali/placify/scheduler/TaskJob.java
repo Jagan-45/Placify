@@ -32,5 +32,12 @@ public class TaskJob implements Job {
         List<Task> tasksCreated = taskService.createAutomatedTasks(createdBy, dto, ts);
 
         taskService.saveAssociatedTasks(ts, tasksCreated, dto, jobId, triggerId, cronExp, createdBy);
+
+        try{
+            taskService.trackTaskStreak();
+        }
+        catch (Exception e) {
+
+        }
     }
 }
