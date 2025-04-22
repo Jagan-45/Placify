@@ -35,8 +35,10 @@ public class User {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
+    @JsonIgnore
     private Role role;
 
+    @JsonIgnore
     private boolean enabled;
 
     @Column(nullable = true)
@@ -44,7 +46,7 @@ public class User {
 
     @OneToMany(mappedBy = "createdBy", orphanRemoval = true, cascade = CascadeType.ALL)
     @JsonIgnore
-    private List<Problem> problems;
+    private List<Problem> problems = new ArrayList<>();
 
     @OneToMany(mappedBy = "createdBy", cascade = CascadeType.ALL)
     @JsonIgnore
@@ -63,6 +65,7 @@ public class User {
     @JoinColumn(name = "batch_id", referencedColumnName = "batch_id")
     private Batch batch;
 
+    @JsonIgnore
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
     private List<ContestUser> contestAssignedTo = new ArrayList<>();
 
@@ -70,9 +73,11 @@ public class User {
     @JsonIgnore
     private Leaderboard leaderboard;
 
+    @JsonIgnore
     @OneToMany(mappedBy = "createdBy", cascade = CascadeType.ALL)
     private List<TaskScheduled> scheduledTasks = new ArrayList<>();
 
+    @JsonIgnore
     @OneToMany(mappedBy = "createdBy", cascade = CascadeType.ALL)
     private List<Batch> batchesCreated = new ArrayList<>();
 
